@@ -4,7 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiConfig } from "wagmi";
 import { config } from "./lib/wagmi";
-import App from "./App";
+import App from "./App.tsx"; // Ensure the file exists and has the correct extension
 import "./index.css";
 import { Toaster } from "react-hot-toast";
 
