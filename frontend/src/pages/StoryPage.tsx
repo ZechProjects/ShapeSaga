@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useStory } from "../hooks/useStory";
 import { useContributionTree } from "../hooks/useContributionTree";
 import { useStoryTreeMetrics } from "../hooks/useStoryTreeMetrics";
+import { useFavorites } from "../hooks/useFavorites";
 import { ContentType } from "../lib/contracts";
 import { ContributionTree } from "../components/ContributionTree";
 import { ContributionViewer } from "../components/ContributionViewer";
@@ -18,10 +19,10 @@ export function StoryPage() {
   } = useContributionTree(id);
   const { metrics: treeMetrics, isLoading: isLoadingMetrics } =
     useStoryTreeMetrics(id);
+  const { isFavorite, toggleFavorite } = useFavorites();
 
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [isTreeExpanded, setIsTreeExpanded] = useState(false);
-  const [isContributeExpanded, setIsContributeExpanded] = useState(false);
 
   // Select the first contribution by default when tree loads
   useEffect(() => {
@@ -131,24 +132,9 @@ export function StoryPage() {
     return findParent(tree, nodeId);
   };
 
-  // Helper function to find all nodes in the tree (flattened)
-  const flattenTree = (nodes: any[]): any[] => {
-    const result: any[] = [];
-    const traverse = (nodeList: any[]) => {
-      for (const node of nodeList) {
-        result.push(node);
-        if (node.children) {
-          traverse(node.children);
-        }
-      }
-    };
-    traverse(nodes);
-    return result;
-  };
-
   // Navigation helpers
   const getNavigationOptions = (currentNode: any) => {
-    if (!currentNode) return { parent: null, children: [], siblings: [] };
+    if (!currentNode) return { parent: null, children: [] };
 
     const parent = findParentNode(
       currentNode.contribution.id.toString(),
@@ -156,20 +142,21 @@ export function StoryPage() {
     );
     const children = currentNode.children || [];
 
-    // Find siblings (other children of the same parent)
-    const siblings = parent
-      ? parent.children.filter(
-          (sibling: any) =>
-            sibling.contribution.id.toString() !==
-            currentNode.contribution.id.toString()
-        )
-      : contributionTree.filter(
-          (sibling: any) =>
-            sibling.contribution.id.toString() !==
-            currentNode.contribution.id.toString()
-        );
+    return { parent, children };
+  };
 
-    return { parent, children, siblings };
+  // Handle adding/removing story from favorites
+  const handleToggleFavorite = () => {
+    if (!story || !id) return;
+
+    const favoriteStory = {
+      id,
+      title: story.title,
+      creator: story.creator,
+      createdAt: story.createdAt.toString(),
+    };
+
+    toggleFavorite(favoriteStory);
   };
 
   // Loading state
@@ -220,10 +207,10 @@ export function StoryPage() {
                 "The story you're looking for doesn't exist or has been removed."}
             </p>
             <Link
-              to="/explore"
+              to="/stories"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
             >
-              ← Back to Explore
+              ← Back to Stories
             </Link>
           </div>
         </div>
@@ -233,10 +220,10 @@ export function StoryPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Back to Explore */}
+      {/* Back to Stories */}
       <div className="mb-6">
         <Link
-          to="/explore"
+          to="/stories"
           className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200"
         >
           <svg
@@ -252,7 +239,7 @@ export function StoryPage() {
               d="M15 19l-7-7 7-7"
             />
           </svg>
-          Back to Explore
+          Back to Stories
         </Link>
       </div>
 
@@ -428,7 +415,7 @@ export function StoryPage() {
                     {selectedNode && (
                       <div className="mt-6 space-y-4">
                         {(() => {
-                          const { parent, children, siblings } =
+                          const { parent, children } =
                             getNavigationOptions(selectedNode);
                           return (
                             <>
@@ -555,10 +542,17 @@ export function StoryPage() {
                   Contribute to Story
                 </Link>
               )}
-              <button className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors duration-200">
+              <button
+                onClick={handleToggleFavorite}
+                className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                  id && isFavorite(id)
+                    ? "bg-red-100 text-red-700 hover:bg-red-200"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
                 <svg
                   className="w-4 h-4 mr-2"
-                  fill="none"
+                  fill={id && isFavorite(id) ? "currentColor" : "none"}
                   stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -569,7 +563,9 @@ export function StoryPage() {
                     d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                   />
                 </svg>
-                Add to Favorites
+                {id && isFavorite(id)
+                  ? "Remove from Favorites"
+                  : "Add to Favorites"}
               </button>
             </div>
             <div className="flex items-center space-x-2">

@@ -410,7 +410,7 @@ export function ProfilePage() {
             </Link>
 
             <Link
-              to="/explore"
+              to="/stories"
               className="flex items-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow border border-gray-200"
             >
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">

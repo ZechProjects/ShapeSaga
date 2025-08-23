@@ -302,10 +302,10 @@ export function ContributeToStoryPage() {
                 "The story you're trying to contribute to doesn't exist or has been removed."}
             </p>
             <Link
-              to="/explore"
+              to="/stories"
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
             >
-              ← Back to Explore
+              ← Back to Stories
             </Link>
           </div>
         </div>
@@ -348,7 +348,7 @@ export function ContributeToStoryPage() {
                 View Story
               </Link>
               <Link
-                to="/explore"
+                to="/stories"
                 className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors duration-200"
               >
                 Explore Active Stories

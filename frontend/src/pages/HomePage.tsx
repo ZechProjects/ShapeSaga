@@ -95,7 +95,7 @@ export function HomePage() {
             contribute, and explore interactive stories with the community.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/explore" className="btn-primary">
+            <Link to="/stories" className="btn-primary">
               Explore All Stories
             </Link>
             <Link to="/create" className="btn-outline">
@@ -132,7 +132,7 @@ export function HomePage() {
             <Link to="/create" className="btn-primary">
               Create a Story
             </Link>
-            <Link to="/explore" className="btn-outline">
+            <Link to="/stories" className="btn-outline">
               Browse Stories
             </Link>
           </div>
