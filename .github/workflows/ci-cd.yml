@@ -100,4 +100,3 @@ jobs:
           vercel-version: "39.1.2"
           github-comment: false
           github-deployment: false
-          working-directory: ./frontend
