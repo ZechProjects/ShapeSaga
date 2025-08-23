@@ -34,24 +34,25 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      "shape-testnet": process.env.SHAPE_EXPLORER_API_KEY || "placeholder",
-      "shape-mainnet": process.env.SHAPE_EXPLORER_API_KEY || "placeholder",
+      // Both Shape testnet and mainnet use Blockscout (no API keys required)
+      "shape-testnet": "abc", // dummy key for blockscout
+      "shape-mainnet": "abc", // dummy key for blockscout
     },
     customChains: [
       {
         network: "shape-testnet",
         chainId: 11011,
         urls: {
-          apiURL: "https://testnet-explorer-api.shape.network/api",
-          browserURL: "https://testnet-explorer.shape.network",
+          apiURL: "https://sepolia.shapescan.xyz/api",
+          browserURL: "https://sepolia.shapescan.xyz",
         },
       },
       {
         network: "shape-mainnet",
         chainId: 360,
         urls: {
-          apiURL: "https://explorer-api.shape.network/api",
-          browserURL: "https://explorer.shape.network",
+          apiURL: "https://shapescan.xyz/api",
+          browserURL: "https://shapescan.xyz",
         },
       },
     ],

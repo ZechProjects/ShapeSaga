@@ -1,0 +1,137 @@
+import { Address } from "viem";
+
+// Contract ABIs - These would normally be generated from your compiled contracts
+export const STORY_REGISTRY_ABI = [
+  {
+    type: "function",
+    name: "createStory",
+    inputs: [
+      { name: "_title", type: "string" },
+      { name: "_description", type: "string" },
+      { name: "_contentType", type: "uint8" },
+      { name: "_metadataURI", type: "string" },
+      {
+        name: "_settings",
+        type: "tuple",
+        components: [
+          { name: "allowBranching", type: "bool" },
+          { name: "requireApproval", type: "bool" },
+          { name: "maxContributions", type: "uint256" },
+          { name: "contributionReward", type: "uint256" },
+        ],
+      },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "getStory",
+    inputs: [{ name: "_storyId", type: "uint256" }],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        components: [
+          { name: "id", type: "uint256" },
+          { name: "creator", type: "address" },
+          { name: "title", type: "string" },
+          { name: "description", type: "string" },
+          { name: "contentType", type: "uint8" },
+          { name: "metadataURI", type: "string" },
+          { name: "createdAt", type: "uint256" },
+          { name: "totalContributions", type: "uint256" },
+          { name: "isActive", type: "bool" },
+          { name: "rewardPool", type: "uint256" },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getUserStories",
+    inputs: [{ name: "_user", type: "address" }],
+    outputs: [{ name: "", type: "uint256[]" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "totalStories",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "event",
+    name: "StoryCreated",
+    inputs: [
+      { indexed: true, name: "storyId", type: "uint256" },
+      { indexed: true, name: "creator", type: "address" },
+      { indexed: false, name: "title", type: "string" },
+      { indexed: false, name: "contentType", type: "uint8" },
+    ],
+  },
+] as const;
+
+// Content type enum mapping
+export enum ContentType {
+  TEXT = 0,
+  IMAGE = 1,
+  VIDEO = 2,
+}
+
+// Contract addresses - these should be set from environment variables
+export const CONTRACT_ADDRESSES = {
+  STORY_REGISTRY: (import.meta.env.VITE_CONTRACT_STORY_REGISTRY ||
+    "") as Address,
+  CONTRIBUTION_MANAGER: (import.meta.env.VITE_CONTRACT_CONTRIBUTION_MANAGER ||
+    "") as Address,
+  NFT_MINTER: (import.meta.env.VITE_CONTRACT_NFT_MINTER || "") as Address,
+  REWARD_SYSTEM: (import.meta.env.VITE_CONTRACT_REWARD_SYSTEM || "") as Address,
+} as const;
+
+// Story types
+export interface Story {
+  id: bigint;
+  creator: Address;
+  title: string;
+  description: string;
+  contentType: ContentType;
+  metadataURI: string;
+  createdAt: bigint;
+  totalContributions: bigint;
+  isActive: boolean;
+  rewardPool: bigint;
+}
+
+export interface StorySettings {
+  allowBranching: boolean;
+  requireApproval: boolean;
+  maxContributions: bigint;
+  contributionReward: bigint;
+}
+
+// Story metadata interface for IPFS
+export interface StoryMetadata {
+  title: string;
+  description: string;
+  genre: string;
+  language: string;
+  targetAudience: string;
+  worldTheme: string;
+  timeline: string;
+  estimatedDuration: string;
+  collaborationMode: string;
+  characters: {
+    main: number;
+    secondary: number;
+  };
+  structure: {
+    maxChapters: number | "unlimited";
+    maxBranchesPerChapter: number | "unlimited";
+  };
+  medium: "text" | "comic" | "video";
+  createdAt: string;
+  version: string;
+}

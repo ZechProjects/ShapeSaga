@@ -19,7 +19,7 @@ const shapeMainnet = {
     default: { http: ["https://mainnet-rpc.shape.network"] },
   },
   blockExplorers: {
-    default: { name: "Shape Explorer", url: "https://explorer.shape.network" },
+    default: { name: "Shape Explorer", url: "https://shapescan.xyz" },
   },
 } as const;
 
@@ -39,7 +39,7 @@ const shapeTestnetConfig = {
   blockExplorers: {
     default: {
       name: "Shape Testnet Explorer",
-      url: "https://testnet-explorer.shape.network",
+      url: "https://sepolia.shapescan.xyz",
     },
   },
   testnet: true,
