@@ -41,6 +41,11 @@ describe("ShapeSaga Contracts", function () {
     );
     await rewardSystem.waitForDeployment();
 
+    // Set the ContributionManager address in StoryRegistry
+    await storyRegistry.setContributionManager(
+      await contributionManager.getAddress()
+    );
+
     // Add funding to reward system
     await rewardSystem.addToPlatformRewardPool({
       value: ethers.parseEther("10"),
