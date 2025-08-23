@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useStory } from "../hooks/useStory";
 import { useCreateContribution } from "../hooks/useCreateContribution";
 import { useContributionTree } from "../hooks/useContributionTree";
+import { useContributionTitles } from "../hooks/useContributionTitles";
 import { ContentType } from "../lib/contracts";
 import { uploadFileToIPFS } from "../lib/ipfs";
 import toast from "react-hot-toast";
@@ -27,6 +28,9 @@ export function ContributeToStoryPage() {
   } = useCreateContribution();
   const { flattenedContributions, isLoading: contributionsLoading } =
     useContributionTree(id);
+
+  const { contributionsWithTitles, isLoading: titlesLoading } =
+    useContributionTitles(flattenedContributions);
 
   // Form state
   const [contributionType, setContributionType] = useState<
@@ -126,6 +130,19 @@ export function ContributeToStoryPage() {
       return;
     }
 
+    // Validate media content for image and video stories
+    if (story.contentType === ContentType.IMAGE && !file) {
+      toast.error(
+        "Please provide an image for this visual story. Generate one using AI or upload an image file."
+      );
+      return;
+    }
+
+    if (story.contentType === ContentType.VIDEO && !file) {
+      toast.error("Please upload a video file for this video story.");
+      return;
+    }
+
     try {
       let finalContent = content;
 
@@ -198,7 +215,8 @@ export function ContributeToStoryPage() {
     }
   };
 
-  const formatContributionForSelection = (node: any) => {
+  const formatContributionForSelection = (contributionWithTitle: any) => {
+    const { node, title } = contributionWithTitle;
     const formatAddress = (address: string) => {
       return `${address.slice(0, 6)}...${address.slice(-4)}`;
     };
@@ -213,8 +231,9 @@ export function ContributeToStoryPage() {
 
     const prefix = "  ".repeat(node.level) + (node.level > 0 ? "└─ " : "");
     const branchLabel = node.contribution.isBranch ? " [Branch]" : "";
+    const contributionTitle = title ? ` - "${title}"` : "";
 
-    return `${prefix}#${node.contribution.id.toString()}${branchLabel} by ${formatAddress(
+    return `${prefix}#${node.contribution.id.toString()}${branchLabel}${contributionTitle} by ${formatAddress(
       node.contribution.contributor
     )} - ${formatDate(node.contribution.createdAt)}`;
   };
@@ -411,15 +430,17 @@ export function ContributeToStoryPage() {
               value={parentContributionId}
               onChange={(e) => setParentContributionId(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              disabled={contributionsLoading}
+              disabled={contributionsLoading || titlesLoading}
             >
               <option value="">Start from story beginning (root)</option>
-              {flattenedContributions.map((node) => (
+              {contributionsWithTitles.map((contributionWithTitle) => (
                 <option
-                  key={node.contribution.id.toString()}
-                  value={node.contribution.id.toString()}
+                  key={contributionWithTitle.node.contribution.id.toString()}
+                  value={contributionWithTitle.node.contribution.id.toString()}
                 >
-                  {formatContributionForSelection(node)}
+                  {contributionWithTitle.isLoading
+                    ? `Loading... #${contributionWithTitle.node.contribution.id.toString()}`
+                    : formatContributionForSelection(contributionWithTitle)}
                 </option>
               ))}
             </select>
@@ -427,6 +448,11 @@ export function ContributeToStoryPage() {
               {contributionType === "continue"
                 ? "Select which contribution to continue from, or leave empty to start from the beginning"
                 : "Select which contribution to branch from, or leave empty to branch from the beginning"}
+              {titlesLoading && (
+                <span className="block mt-1 text-yellow-600 font-medium">
+                  Loading contribution titles...
+                </span>
+              )}
               {parentContributionId && (
                 <span className="block mt-1 text-blue-600 font-medium">
                   Pre-selected: Contribution #{parentContributionId}
@@ -471,7 +497,7 @@ export function ContributeToStoryPage() {
           {story.contentType === ContentType.IMAGE && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-900 mb-2">
-                Generate Image from Prompt
+                Generate Image from Prompt *
               </label>
               <div className="flex items-center space-x-2 mb-2">
                 <input
@@ -490,6 +516,12 @@ export function ContributeToStoryPage() {
                   {isGenerating ? "Generating..." : "Generate"}
                 </button>
               </div>
+              {!file && (
+                <p className="text-sm text-red-600 mb-2">
+                  An image is required for visual stories. Generate one using AI
+                  or upload your own image below.
+                </p>
+              )}
               {isGenerating && (
                 <div className="text-center p-4">
                   <div className="animate-pulse">Generating your image...</div>
@@ -504,6 +536,54 @@ export function ContributeToStoryPage() {
                   />
                 </div>
               )}
+
+              {/* Manual upload option for images */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Or Upload Your Own Image
+                </label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors duration-200">
+                  <div className="space-y-1 text-center">
+                    <svg
+                      className="mx-auto h-12 w-12 text-gray-400"
+                      stroke="currentColor"
+                      fill="none"
+                      viewBox="0 0 48 48"
+                    >
+                      <path
+                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <div className="flex text-sm text-gray-600">
+                      <label
+                        htmlFor="image-upload"
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                      >
+                        <span>
+                          {file && file.type.startsWith("image/")
+                            ? "Change image"
+                            : "Upload an image"}
+                        </span>
+                        <input
+                          id="image-upload"
+                          name="image-upload"
+                          type="file"
+                          className="sr-only"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF up to 10MB
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -511,8 +591,13 @@ export function ContributeToStoryPage() {
           {story.contentType === ContentType.VIDEO && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-900 mb-2">
-                Upload Video
+                Upload Video *
               </label>
+              {!file && (
+                <p className="text-sm text-red-600 mb-2">
+                  A video file is required for video stories.
+                </p>
+              )}
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors duration-200">
                 <div className="space-y-1 text-center">
                   {previewUrl ? (

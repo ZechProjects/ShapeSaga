@@ -8,6 +8,150 @@ interface ContributionViewerProps {
   storyId?: string;
 }
 
+interface ContributeToStorySectionProps {
+  node: ContributionNode;
+  storyId: string;
+}
+
+function ContributeToStorySection({
+  node,
+  storyId,
+}: ContributeToStorySectionProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="border-t border-gray-200 pt-4 mt-6">
+      <div className="flex items-center justify-between">
+        <div className="text-sm text-gray-500">
+          Path: {node.path} • Level: {node.level}
+        </div>
+        <div className="flex items-center space-x-2">
+          <a
+            href={
+              node.contribution.metadataURI.startsWith("ipfs://")
+                ? `https://ipfs.io/ipfs/${node.contribution.metadataURI.replace(
+                    "ipfs://",
+                    ""
+                  )}`
+                : node.contribution.metadataURI
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-blue-600 hover:text-blue-800 underline"
+          >
+            View Raw Metadata →
+          </a>
+        </div>
+      </div>
+
+      {/* Contribute to Story Toggle Section */}
+      <div className="mt-4">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center justify-between w-full p-3 bg-gradient-to-r from-blue-50 to-green-50 border border-gray-200 rounded-lg hover:from-blue-100 hover:to-green-100 transition-colors duration-200"
+        >
+          <div className="flex items-center space-x-2">
+            <svg
+              className="w-5 h-5 text-blue-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+            <span className="font-medium text-gray-900">
+              Contribute to Story
+            </span>
+          </div>
+          <svg
+            className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+              isExpanded ? "rotate-180" : ""
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+
+        {isExpanded && (
+          <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-sm text-gray-600 mb-4">
+              Choose how you'd like to contribute to this story:
+            </p>
+            <div className="flex items-center space-x-3">
+              <Link
+                to={`/story/${storyId}/contribute?parent=${node.contribution.id.toString()}`}
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm"
+              >
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
+                Continue Story
+                <span className="ml-2 text-xs bg-blue-500 px-2 py-1 rounded">
+                  Sequential
+                </span>
+              </Link>
+              <Link
+                to={`/story/${storyId}/contribute?parent=${node.contribution.id.toString()}&branch=true`}
+                className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm"
+              >
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+                Create Branch
+                <span className="ml-2 text-xs bg-green-500 px-2 py-1 rounded">
+                  Alternative
+                </span>
+              </Link>
+            </div>
+            <div className="mt-3 text-xs text-gray-500">
+              <p>
+                <strong>Continue:</strong> Add the next part to this story path
+              </p>
+              <p>
+                <strong>Branch:</strong> Create an alternative storyline from
+                this point
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ContributionViewer({
   node,
   storyContentType,
@@ -214,8 +358,6 @@ export function ContributionViewer({
         )}
 
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Content</h3>
-
           {/* Image content */}
           {storyContentType === ContentType.IMAGE && content?.imageUrl && (
             <div className="mb-4">
@@ -267,68 +409,7 @@ export function ContributionViewer({
 
         {/* Action Buttons */}
         {node && storyId && (
-          <div className="border-t border-gray-200 pt-4 mt-6">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                Path: {node.path} • Level: {node.level}
-              </div>
-              <div className="flex items-center space-x-2">
-                <Link
-                  to={`/story/${storyId}/contribute?parent=${node.contribution.id.toString()}`}
-                  className="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors duration-200"
-                >
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                    />
-                  </svg>
-                  Continue
-                </Link>
-                <Link
-                  to={`/story/${storyId}/contribute?parent=${node.contribution.id.toString()}&branch=true`}
-                  className="inline-flex items-center px-3 py-1 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors duration-200"
-                >
-                  <svg
-                    className="w-4 h-4 mr-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
-                  Branch
-                </Link>
-                <a
-                  href={
-                    node.contribution.metadataURI.startsWith("ipfs://")
-                      ? `https://ipfs.io/ipfs/${node.contribution.metadataURI.replace(
-                          "ipfs://",
-                          ""
-                        )}`
-                      : node.contribution.metadataURI
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-blue-600 hover:text-blue-800 underline"
-                >
-                  View Raw Metadata →
-                </a>
-              </div>
-            </div>
-          </div>
+          <ContributeToStorySection node={node} storyId={storyId} />
         )}
 
         {/* Metadata link (fallback if no storyId) */}

@@ -20,6 +20,8 @@ export function StoryPage() {
     useStoryTreeMetrics(id);
 
   const [selectedNode, setSelectedNode] = useState<any>(null);
+  const [isTreeExpanded, setIsTreeExpanded] = useState(false);
+  const [isContributeExpanded, setIsContributeExpanded] = useState(false);
 
   // Select the first contribution by default when tree loads
   useEffect(() => {
@@ -84,6 +86,90 @@ export function StoryPage() {
       node.level,
       ...node.children.map((child: any) => getMaxDepth(child))
     );
+  };
+
+  // Helper function to filter tree to maximum depth of 5 levels
+  const filterTreeByDepth = (nodes: any[], maxDepth: number = 5): any[] => {
+    const filterNode = (node: any): any => {
+      if (node.level >= maxDepth) {
+        // Return node without children if at max depth
+        return {
+          ...node,
+          children: [],
+        };
+      }
+
+      // Recursively filter children
+      return {
+        ...node,
+        children: node.children ? node.children.map(filterNode) : [],
+      };
+    };
+
+    return nodes.map(filterNode);
+  };
+
+  // Helper function to find a node's parent in the tree
+  const findParentNode = (nodeId: string, tree: any[]): any | null => {
+    const findParent = (nodes: any[], targetId: string): any | null => {
+      for (const node of nodes) {
+        if (
+          node.children &&
+          node.children.some(
+            (child: any) => child.contribution.id.toString() === targetId
+          )
+        ) {
+          return node;
+        }
+        if (node.children) {
+          const found = findParent(node.children, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    return findParent(tree, nodeId);
+  };
+
+  // Helper function to find all nodes in the tree (flattened)
+  const flattenTree = (nodes: any[]): any[] => {
+    const result: any[] = [];
+    const traverse = (nodeList: any[]) => {
+      for (const node of nodeList) {
+        result.push(node);
+        if (node.children) {
+          traverse(node.children);
+        }
+      }
+    };
+    traverse(nodes);
+    return result;
+  };
+
+  // Navigation helpers
+  const getNavigationOptions = (currentNode: any) => {
+    if (!currentNode) return { parent: null, children: [], siblings: [] };
+
+    const parent = findParentNode(
+      currentNode.contribution.id.toString(),
+      contributionTree
+    );
+    const children = currentNode.children || [];
+
+    // Find siblings (other children of the same parent)
+    const siblings = parent
+      ? parent.children.filter(
+          (sibling: any) =>
+            sibling.contribution.id.toString() !==
+            currentNode.contribution.id.toString()
+        )
+      : contributionTree.filter(
+          (sibling: any) =>
+            sibling.contribution.id.toString() !==
+            currentNode.contribution.id.toString()
+        );
+
+    return { parent, children, siblings };
   };
 
   // Loading state
@@ -262,10 +348,6 @@ export function StoryPage() {
 
           {/* Story Content & Contributions */}
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Story Contributions
-            </h2>
-
             {isLoadingContributions && (
               <div className="text-center py-8">
                 <div className="animate-pulse">Loading contributions...</div>
@@ -281,24 +363,169 @@ export function StoryPage() {
             )}
 
             {!isLoadingContributions && !contributionsError && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-6">
                 {/* Tree Structure */}
-                <div>
-                  <ContributionTree
-                    nodes={contributionTree}
-                    onSelectNode={setSelectedNode}
-                    selectedNodeId={selectedNode?.contribution.id.toString()}
-                    storyContentType={story?.contentType || ContentType.TEXT}
-                  />
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                    <button
+                      onClick={() => setIsTreeExpanded(!isTreeExpanded)}
+                      className="flex items-center justify-between w-full text-left"
+                    >
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Table of Contents
+                      </h3>
+                      <svg
+                        className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                          isTreeExpanded ? "rotate-180" : ""
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  {isTreeExpanded && (
+                    <div className="p-4">
+                      <ContributionTree
+                        nodes={filterTreeByDepth(contributionTree, 5)}
+                        onSelectNode={setSelectedNode}
+                        selectedNodeId={selectedNode?.contribution.id.toString()}
+                        storyContentType={
+                          story?.contentType || ContentType.TEXT
+                        }
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Content Viewer */}
-                <div>
-                  <ContributionViewer
-                    node={selectedNode}
-                    storyContentType={story?.contentType || ContentType.TEXT}
-                    storyId={id}
-                  />
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  {/* Navigation Header */}
+                  {selectedNode && (
+                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Contents
+                      </h3>
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <ContributionViewer
+                      node={selectedNode}
+                      storyContentType={story?.contentType || ContentType.TEXT}
+                      storyId={id}
+                    />
+
+                    {/* Navigation Controls Below Content */}
+                    {selectedNode && (
+                      <div className="mt-6 space-y-4">
+                        {(() => {
+                          const { parent, children, siblings } =
+                            getNavigationOptions(selectedNode);
+                          return (
+                            <>
+                              {/* Back and Next Navigation */}
+                              <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+                                {/* Back Button */}
+                                {parent ? (
+                                  <button
+                                    onClick={() => setSelectedNode(parent)}
+                                    className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors duration-200"
+                                  >
+                                    <svg
+                                      className="w-4 h-4 mr-2"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 19l-7-7 7-7"
+                                      />
+                                    </svg>
+                                    Back
+                                  </button>
+                                ) : (
+                                  <div></div>
+                                )}
+
+                                {/* Next Buttons */}
+                                {children.length > 0 && (
+                                  <div className="flex items-center space-x-2">
+                                    {children.length === 1 ? (
+                                      <button
+                                        onClick={() =>
+                                          setSelectedNode(children[0])
+                                        }
+                                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+                                      >
+                                        Continue
+                                        <svg
+                                          className="w-4 h-4 ml-2"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M9 5l7 7-7 7"
+                                          />
+                                        </svg>
+                                      </button>
+                                    ) : (
+                                      children
+                                        .slice(0, 3)
+                                        .map((child: any, index: number) => (
+                                          <button
+                                            key={child.contribution.id}
+                                            onClick={() =>
+                                              setSelectedNode(child)
+                                            }
+                                            className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors duration-200"
+                                            title={
+                                              child.contribution.title ||
+                                              "Untitled Contribution"
+                                            }
+                                          >
+                                            {child.contribution.title
+                                              ? child.contribution.title.substring(
+                                                  0,
+                                                  15
+                                                ) +
+                                                (child.contribution.title
+                                                  .length > 15
+                                                  ? "..."
+                                                  : "")
+                                              : `Path ${index + 1}`}
+                                          </button>
+                                        ))
+                                    )}
+                                    {children.length > 3 && (
+                                      <span className="text-sm text-gray-500">
+                                        +{children.length - 3} more
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
