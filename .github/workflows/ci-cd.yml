@@ -79,41 +79,10 @@ jobs:
           cd contracts
           npm run test
 
-  # Deploy contracts to testnet (only on push to main)
-  deploy-contracts-testnet:
-    runs-on: ubuntu-latest
-    needs: [contracts-test]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
-          cache-dependency-path: "contracts/package-lock.json"
-
-      - name: Install contract dependencies
-        run: |
-          cd contracts
-          npm ci
-
-      - name: Deploy contracts to testnet
-        run: |
-          cd contracts
-          npm run deploy
-        env:
-          PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
-          SHAPE_TESTNET_RPC_URL: ${{ secrets.SHAPE_TESTNET_RPC_URL }}
-          SHAPE_EXPLORER_API_KEY: ${{ secrets.SHAPE_EXPLORER_API_KEY }}
-
   # Deploy to Vercel (only on push to main)
   deploy-vercel:
     runs-on: ubuntu-latest
-    needs: [frontend-test-build, deploy-contracts-testnet]
+    needs: [frontend-test-build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
