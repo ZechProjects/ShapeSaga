@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ConnectWallet } from "./ConnectWallet";
 
@@ -8,6 +8,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
     { path: "/", label: "Home" },
@@ -28,6 +29,7 @@ export function Layout({ children }: LayoutProps) {
               </Link>
             </div>
 
+            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
               {navItems.map((item) => (
                 <Link
@@ -44,8 +46,75 @@ export function Layout({ children }: LayoutProps) {
               ))}
             </div>
 
-            <div className="flex items-center space-x-4">
+            {/* Desktop Wallet Connection */}
+            <div className="hidden md:flex items-center space-x-4">
               <ConnectWallet />
+            </div>
+
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                aria-expanded="false"
+              >
+                <span className="sr-only">Open main menu</span>
+                {/* Hamburger icon */}
+                <svg
+                  className={`${isMobileMenuOpen ? "hidden" : "block"} h-6 w-6`}
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+                {/* Close icon */}
+                <svg
+                  className={`${isMobileMenuOpen ? "block" : "hidden"} h-6 w-6`}
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Navigation Menu */}
+          <div className={`${isMobileMenuOpen ? "block" : "hidden"} md:hidden`}>
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
+              {navItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                    location.pathname === item.path
+                      ? "text-blue-600 bg-blue-50"
+                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <div className="px-3 py-2">
+                <ConnectWallet />
+              </div>
             </div>
           </div>
         </nav>
