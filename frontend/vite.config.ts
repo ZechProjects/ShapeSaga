@@ -21,5 +21,15 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          wagmi: ["wagmi", "@wagmi/core", "@wagmi/connectors"],
+          utils: ["axios", "date-fns", "zustand"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
   },
 });
