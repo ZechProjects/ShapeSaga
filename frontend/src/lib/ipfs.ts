@@ -1,24 +1,24 @@
 import { StoryMetadata } from "./contracts";
 
-// IPFS/Pinata configuration
-const PINATA_API_KEY = import.meta.env.VITE_PINATA_API_KEY || "";
-const PINATA_SECRET_KEY = import.meta.env.VITE_PINATA_SECRET_KEY || "";
+// IPFS/Pinata v3 API configuration
+const PINATA_JWT = import.meta.env.VITE_PINATA_JWT || "";
 const PINATA_API_URL = "https://api.pinata.cloud";
 
-interface PinataResponse {
+interface PinataV3Response {
   IpfsHash: string;
   PinSize: number;
   Timestamp: string;
+  isDuplicate?: boolean;
 }
 
 /**
- * Upload story metadata to IPFS via Pinata
+ * Upload story metadata to IPFS via Pinata v3 API
  */
 export async function uploadStoryMetadata(
   metadata: StoryMetadata
 ): Promise<string> {
-  if (!PINATA_API_KEY || !PINATA_SECRET_KEY) {
-    throw new Error("Pinata API credentials not configured");
+  if (!PINATA_JWT) {
+    throw new Error("Pinata JWT not configured");
   }
 
   try {
@@ -32,6 +32,7 @@ export async function uploadStoryMetadata(
       `story-${metadata.title.replace(/\s+/g, "-").toLowerCase()}.json`
     );
 
+    // Pinata metadata for v3 API
     const pinataMetadata = JSON.stringify({
       name: `ShapeSaga Story: ${metadata.title}`,
       keyvalues: {
@@ -39,20 +40,21 @@ export async function uploadStoryMetadata(
         language: metadata.language,
         medium: metadata.medium,
         collaborationMode: metadata.collaborationMode,
+        app: "ShapeSaga",
+        type: "story-metadata",
       },
     });
     formData.append("pinataMetadata", pinataMetadata);
 
     const pinataOptions = JSON.stringify({
-      cidVersion: 0,
+      cidVersion: 1,
     });
     formData.append("pinataOptions", pinataOptions);
 
     const response = await fetch(`${PINATA_API_URL}/pinning/pinFileToIPFS`, {
       method: "POST",
       headers: {
-        pinata_api_key: PINATA_API_KEY,
-        pinata_secret_api_key: PINATA_SECRET_KEY,
+        Authorization: `Bearer ${PINATA_JWT}`,
       },
       body: formData,
     });
@@ -62,7 +64,7 @@ export async function uploadStoryMetadata(
       throw new Error(`Pinata upload failed: ${response.status} ${errorText}`);
     }
 
-    const result: PinataResponse = await response.json();
+    const result: PinataV3Response = await response.json();
     return `ipfs://${result.IpfsHash}`;
   } catch (error) {
     console.error("Error uploading to IPFS:", error);
@@ -71,31 +73,38 @@ export async function uploadStoryMetadata(
 }
 
 /**
- * Upload file content to IPFS via Pinata
+ * Upload file content to IPFS via Pinata v3 API
  */
 export async function uploadFileToIPFS(file: File): Promise<string> {
-  if (!PINATA_API_KEY || !PINATA_SECRET_KEY) {
-    throw new Error("Pinata API credentials not configured");
+  if (!PINATA_JWT) {
+    throw new Error("Pinata JWT not configured");
   }
 
   try {
     const formData = new FormData();
     formData.append("file", file);
 
+    // Pinata metadata for v3 API
     const pinataMetadata = JSON.stringify({
       name: `ShapeSaga File: ${file.name}`,
       keyvalues: {
         fileType: file.type,
         fileName: file.name,
+        app: "ShapeSaga",
+        type: "story-file",
       },
     });
     formData.append("pinataMetadata", pinataMetadata);
 
+    const pinataOptions = JSON.stringify({
+      cidVersion: 1,
+    });
+    formData.append("pinataOptions", pinataOptions);
+
     const response = await fetch(`${PINATA_API_URL}/pinning/pinFileToIPFS`, {
       method: "POST",
       headers: {
-        pinata_api_key: PINATA_API_KEY,
-        pinata_secret_api_key: PINATA_SECRET_KEY,
+        Authorization: `Bearer ${PINATA_JWT}`,
       },
       body: formData,
     });
@@ -105,7 +114,7 @@ export async function uploadFileToIPFS(file: File): Promise<string> {
       throw new Error(`Pinata upload failed: ${response.status} ${errorText}`);
     }
 
-    const result: PinataResponse = await response.json();
+    const result: PinataV3Response = await response.json();
     return `ipfs://${result.IpfsHash}`;
   } catch (error) {
     console.error("Error uploading file to IPFS:", error);

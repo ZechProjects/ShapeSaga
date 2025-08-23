@@ -40,7 +40,7 @@ Copy `.env.example` to `.env` and fill in the following:
 
 - `VITE_WALLETCONNECT_PROJECT_ID`: Get from [WalletConnect Cloud](https://cloud.walletconnect.com/)
 - `VITE_OPENAI_API_KEY`: OpenAI API key for AI content generation
-- `VITE_PINATA_API_KEY`: Pinata API key for IPFS storage
+- `VITE_PINATA_JWT`: Pinata JWT token for IPFS storage (v3 API)
 - `VITE_CONTRACT_*`: Smart contract addresses (set after deployment)
 
 ## Available Scripts
