@@ -4,6 +4,5 @@
   "outputDirectory": "dist",
   "installCommand": "npm ci",
   "framework": "vite",
-  "rootDirectory": "frontend",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
