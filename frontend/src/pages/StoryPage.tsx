@@ -233,7 +233,10 @@ export function StoryPage() {
           <div className="flex items-center justify-between border-t border-gray-200 pt-6">
             <div className="flex items-center space-x-4">
               {story.isActive && (
-                <button className="inline-flex items-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200">
+                <Link
+                  to={`/story/${id}/contribute`}
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
+                >
                   <svg
                     className="w-4 h-4 mr-2"
                     fill="none"
@@ -248,7 +251,7 @@ export function StoryPage() {
                     />
                   </svg>
                   Contribute to Story
-                </button>
+                </Link>
               )}
               <button className="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors duration-200">
                 <svg

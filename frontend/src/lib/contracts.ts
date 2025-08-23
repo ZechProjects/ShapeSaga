@@ -74,11 +74,86 @@ export const STORY_REGISTRY_ABI = [
   },
 ] as const;
 
+// Contribution Manager ABI
+export const CONTRIBUTION_MANAGER_ABI = [
+  {
+    type: "function",
+    name: "submitContribution",
+    inputs: [
+      { name: "_storyId", type: "uint256" },
+      { name: "_parentContributionId", type: "uint256" },
+      { name: "_metadataURI", type: "string" },
+      { name: "_isBranch", type: "bool" },
+      { name: "_branchTitle", type: "string" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "getContribution",
+    inputs: [{ name: "_contributionId", type: "uint256" }],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        components: [
+          { name: "id", type: "uint256" },
+          { name: "storyId", type: "uint256" },
+          { name: "parentContributionId", type: "uint256" },
+          { name: "contributor", type: "address" },
+          { name: "metadataURI", type: "string" },
+          { name: "status", type: "uint8" },
+          { name: "createdAt", type: "uint256" },
+          { name: "upvotes", type: "uint256" },
+          { name: "downvotes", type: "uint256" },
+          { name: "isBranch", type: "bool" },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getStoryContributions",
+    inputs: [{ name: "_storyId", type: "uint256" }],
+    outputs: [{ name: "", type: "uint256[]" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "voteOnContribution",
+    inputs: [
+      { name: "_contributionId", type: "uint256" },
+      { name: "_isUpvote", type: "bool" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "event",
+    name: "ContributionSubmitted",
+    inputs: [
+      { indexed: true, name: "contributionId", type: "uint256" },
+      { indexed: true, name: "storyId", type: "uint256" },
+      { indexed: true, name: "contributor", type: "address" },
+      { indexed: false, name: "isBranch", type: "bool" },
+    ],
+  },
+] as const;
+
 // Content type enum mapping
 export enum ContentType {
   TEXT = 0,
   IMAGE = 1,
   VIDEO = 2,
+}
+
+// Contribution status enum
+export enum ContributionStatus {
+  PENDING = 0,
+  APPROVED = 1,
+  REJECTED = 2,
 }
 
 // Contract addresses - these should be set from environment variables
@@ -132,6 +207,33 @@ export interface StoryMetadata {
     maxBranchesPerChapter: number | "unlimited";
   };
   medium: "text" | "comic" | "video";
+  createdAt: string;
+  version: string;
+}
+
+// Contribution types
+export interface Contribution {
+  id: bigint;
+  storyId: bigint;
+  parentContributionId: bigint;
+  contributor: Address;
+  metadataURI: string;
+  status: ContributionStatus;
+  createdAt: bigint;
+  upvotes: bigint;
+  downvotes: bigint;
+  isBranch: boolean;
+}
+
+// Contribution metadata interface for IPFS
+export interface ContributionMetadata {
+  title: string;
+  content: string;
+  contentType: ContentType;
+  description?: string;
+  isBranch: boolean;
+  branchTitle?: string;
+  authorNotes?: string;
   createdAt: string;
   version: string;
 }
