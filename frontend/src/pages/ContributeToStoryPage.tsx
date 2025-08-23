@@ -7,7 +7,7 @@ import { useContributionTitles } from "../hooks/useContributionTitles";
 import { ContentType } from "../lib/contracts";
 import { uploadFileToIPFS } from "../lib/ipfs";
 import toast from "react-hot-toast";
-import { generateImage } from "../lib/ai";
+import { generateImage, generateVideo } from "../lib/ai";
 
 export function ContributeToStoryPage() {
   const { id } = useParams<{ id: string }>();
@@ -89,6 +89,35 @@ export function ContributeToStoryPage() {
     } catch (error) {
       console.error("Error generating image:", error);
       toast.error("Failed to generate image. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateVideo = async () => {
+    if (!prompt.trim()) {
+      toast.error("Please enter a prompt for the video.");
+      return;
+    }
+    setIsGenerating(true);
+    setPreviewUrl("");
+    if (file) {
+      setFile(null);
+    }
+
+    try {
+      const videoBlob = await generateVideo(prompt);
+      const videoFile = new File(
+        [videoBlob],
+        `${prompt.replace(/\s/g, "_")}.mp4`,
+        { type: "video/mp4" }
+      );
+      setFile(videoFile);
+      const url = URL.createObjectURL(videoFile);
+      setPreviewUrl(url);
+    } catch (error) {
+      console.error("Error generating video:", error);
+      toast.error("Failed to generate video. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -201,17 +230,6 @@ export function ContributeToStoryPage() {
         return "Describe your video contribution. What scenes or events does it show? How does it fit into the story?";
       default:
         return "Write your contribution...";
-    }
-  };
-
-  const getAcceptedFileTypes = (contentType: ContentType) => {
-    switch (contentType) {
-      case ContentType.IMAGE:
-        return "image/*";
-      case ContentType.VIDEO:
-        return "video/*";
-      default:
-        return "*/*";
     }
   };
 
@@ -591,58 +609,103 @@ export function ContributeToStoryPage() {
           {story.contentType === ContentType.VIDEO && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-900 mb-2">
-                Upload Video *
+                Generate Video from Prompt *
               </label>
+              <div className="flex items-center space-x-2 mb-2">
+                <input
+                  type="text"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., a character walking through a mystical forest"
+                />
+                <button
+                  type="button"
+                  onClick={handleGenerateVideo}
+                  disabled={isGenerating}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGenerating ? "Generating..." : "Generate"}
+                </button>
+              </div>
               {!file && (
                 <p className="text-sm text-red-600 mb-2">
-                  A video file is required for video stories.
+                  A video is required for video stories. Generate one using AI
+                  or upload your own video below.
                 </p>
               )}
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors duration-200">
-                <div className="space-y-1 text-center">
-                  {previewUrl ? (
-                    <div className="mb-4">
-                      <video
-                        src={previewUrl}
-                        className="mx-auto h-32 w-auto rounded-md"
-                        controls
-                      />
-                    </div>
-                  ) : (
-                    <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                  <div className="flex text-sm text-gray-600">
-                    <label
-                      htmlFor="file-upload"
-                      className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
-                    >
-                      <span>{file ? "Change file" : "Upload a file"}</span>
-                      <input
-                        id="file-upload"
-                        name="file-upload"
-                        type="file"
-                        className="sr-only"
-                        accept={getAcceptedFileTypes(story.contentType)}
-                        onChange={handleFileChange}
-                      />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
+              {isGenerating && (
+                <div className="text-center p-4">
+                  <div className="animate-pulse">
+                    Generating your video... This may take a moment.
                   </div>
-                  <p className="text-xs text-gray-500">
-                    MP4, MOV, AVI up to 100MB
-                  </p>
+                </div>
+              )}
+              {previewUrl && file?.type.startsWith("video/") && (
+                <div className="mt-4">
+                  <video
+                    src={previewUrl}
+                    className="mx-auto h-48 w-auto object-cover rounded-md"
+                    controls
+                  />
+                </div>
+              )}
+
+              {/* Manual upload option for videos */}
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Or Upload Your Own Video
+                </label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors duration-200">
+                  <div className="space-y-1 text-center">
+                    {previewUrl && !file?.type.startsWith("video/") ? (
+                      <div className="mb-4">
+                        <video
+                          src={previewUrl}
+                          className="mx-auto h-32 w-auto rounded-md"
+                          controls
+                        />
+                      </div>
+                    ) : (
+                      <svg
+                        className="mx-auto h-12 w-12 text-gray-400"
+                        stroke="currentColor"
+                        fill="none"
+                        viewBox="0 0 48 48"
+                      >
+                        <path
+                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                    <div className="flex text-sm text-gray-600">
+                      <label
+                        htmlFor="video-upload"
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
+                      >
+                        <span>
+                          {file && file.type.startsWith("video/")
+                            ? "Change video"
+                            : "Upload a video"}
+                        </span>
+                        <input
+                          id="video-upload"
+                          name="video-upload"
+                          type="file"
+                          className="sr-only"
+                          accept="video/*"
+                          onChange={handleFileChange}
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      MP4, MOV, AVI up to 100MB
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
