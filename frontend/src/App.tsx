@@ -1,11 +1,11 @@
 import { Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { HomePage } from "./pages/HomePage";
-import { ExplorePage } from "./pages/ExplorePage";
-import { CreateStoryPage } from "./pages/CreateStoryPage";
-import { StoryPage } from "./pages/StoryPage";
-import { ProfilePage } from "./pages/ProfilePage";
-import { RewardsPage } from "./pages/RewardsPage";
+import { ExplorePage } from "./pages/ExplorePage.tsx";
+import { CreateStoryPage } from "./pages/CreateStoryPage.tsx";
+import { StoryPage } from "./pages/StoryPage.tsx";
+import { ProfilePage } from "./pages/ProfilePage.tsx";
+import { RewardsPage } from "./pages/RewardsPage.tsx";
 
 function App() {
   return (

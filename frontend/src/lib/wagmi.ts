@@ -1,6 +1,8 @@
-import { http, createConfig } from "wagmi";
-import { shapeTestnet, shapeSepolia } from "wagmi/chains";
-import { injected, metaMask, walletConnect } from "wagmi/connectors";
+import { createConfig, configureChains } from "wagmi";
+import { InjectedConnector } from "@wagmi/connectors/injected";
+import { MetaMaskConnector } from "@wagmi/connectors/metaMask";
+import { WalletConnectConnector } from "@wagmi/connectors/walletConnect";
+import { publicProvider } from "wagmi/providers/public";
 
 // Shape Network configuration
 const shapeMainnet = {
@@ -43,17 +45,30 @@ const shapeTestnetConfig = {
   testnet: true,
 } as const;
 
+// Configure chains
+const { chains, publicClient, webSocketPublicClient } = configureChains(
+  [shapeTestnetConfig, shapeMainnet],
+  [publicProvider()]
+);
+
 // WalletConnect project ID - replace with your own
 const projectId =
   import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "your-project-id";
 
 export const config = createConfig({
-  chains: [shapeTestnetConfig, shapeMainnet],
-  connectors: [injected(), metaMask(), walletConnect({ projectId })],
-  transports: {
-    [shapeTestnetConfig.id]: http(),
-    [shapeMainnet.id]: http(),
-  },
+  autoConnect: true,
+  connectors: [
+    new InjectedConnector({ chains }),
+    new MetaMaskConnector({ chains }),
+    new WalletConnectConnector({
+      chains,
+      options: {
+        projectId,
+      },
+    }),
+  ],
+  publicClient,
+  webSocketPublicClient,
 });
 
-export { shapeMainnet, shapeTestnetConfig };
+export { chains, shapeMainnet, shapeTestnetConfig };
