@@ -53,7 +53,8 @@ const { chains, publicClient, webSocketPublicClient } = configureChains(
 
 // WalletConnect project ID - replace with your own
 const projectId =
-  import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || "your-project-id";
+  import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ||
+  "e5427b992adba543fdada0fbcf1f52e1";
 
 export const config = createConfig({
   autoConnect: true,
@@ -64,6 +65,15 @@ export const config = createConfig({
       chains,
       options: {
         projectId,
+        metadata: {
+          name: "ShapeSaga",
+          description: "Collaborative storytelling platform on Shape Network",
+          url:
+            typeof window !== "undefined"
+              ? window.location.origin
+              : "https://localhost:3000",
+          icons: ["https://shapesaga.vercel.app/favicon.ico"],
+        },
       },
     }),
   ],

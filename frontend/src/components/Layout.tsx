@@ -1,4 +1,5 @@
 import React from "react";
+import { ConnectWallet } from "./ConnectWallet";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,7 +15,7 @@ export function Layout({ children }: LayoutProps) {
               <h1 className="text-2xl font-bold text-gradient">ShapeSaga</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="btn-primary">Connect Wallet</button>
+              <ConnectWallet />
             </div>
           </div>
         </nav>
