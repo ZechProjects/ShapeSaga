@@ -63,19 +63,28 @@ export function useCreateStory() {
       resetWrite();
       setIsUploading(true);
 
+      console.log("🚀 Starting story creation process...");
+      console.log("📄 Story params:", params);
+
       // Upload metadata to IPFS
       const uploadToast = toast.loading("Uploading story metadata to IPFS...");
+      console.log("☁️ Uploading metadata to IPFS...");
       const metadataURI = await uploadStoryMetadata(params.metadata);
       toast.dismiss(uploadToast);
       toast.success("Metadata uploaded to IPFS");
+      console.log("✅ IPFS Upload successful, URI:", metadataURI);
 
       // Prepare contract arguments
       const rewardPoolValue = params.rewardPool
         ? parseEther(params.rewardPool)
         : 0n;
 
+      console.log("💰 Reward pool value:", rewardPoolValue.toString());
+      console.log("🔗 Contract address:", CONTRACT_ADDRESSES.STORY_REGISTRY);
+
       // Call smart contract
       const contractToast = toast.loading("Creating story on blockchain...");
+      console.log("⛓️ Calling smart contract...");
 
       writeCreateStory({
         args: [
@@ -93,7 +102,7 @@ export function useCreateStory() {
         toast.dismiss(contractToast);
       }, 5000);
     } catch (error) {
-      console.error("Error creating story:", error);
+      console.error("❌ Error creating story:", error);
       toast.dismiss();
 
       if (error instanceof Error) {

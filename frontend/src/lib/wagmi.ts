@@ -38,6 +38,51 @@ const projectId =
   import.meta.env.VITE_WALLETCONNECT_PROJECT_ID ||
   "e5427b992adba543fdada0fbcf1f52e1";
 
+// Get the current app URL dynamically
+const getAppUrl = () => {
+  // If we're in the browser, use the actual current URL
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  // For SSR/build time, check environment variable
+  const envUrl = import.meta.env.VITE_APP_URL;
+  if (envUrl && envUrl.trim()) {
+    return envUrl.trim();
+  }
+
+  // Fallback: try to construct from dev server config
+  const isDev = import.meta.env.DEV;
+  if (isDev) {
+    // In development, try to use the Vite dev server port
+    const defaultPort = import.meta.env.VITE_PORT || "3000";
+    return `http://localhost:${defaultPort}`;
+  }
+
+  // Final fallback
+  return "http://localhost:3000";
+};
+
+// Create WalletConnect connector with dynamic URL
+const createWalletConnectConnector = () => {
+  const appUrl = getAppUrl();
+  console.log("🔗 WalletConnect App URL:", appUrl);
+
+  return new WalletConnectConnector({
+    chains,
+    options: {
+      projectId,
+      metadata: {
+        name: "ShapeSaga",
+        description: "Collaborative storytelling platform on Shape Network",
+        url: appUrl,
+        icons: ["https://shapesaga.vercel.app/favicon.ico"],
+      },
+      showQrModal: true,
+    },
+  });
+};
+
 export const config = createConfig({
   autoConnect: true,
   connectors: [
@@ -54,22 +99,7 @@ export const config = createConfig({
         shimDisconnect: true,
       },
     }),
-    new WalletConnectConnector({
-      chains,
-      options: {
-        projectId,
-        metadata: {
-          name: "ShapeSaga",
-          description: "Collaborative storytelling platform on Shape Network",
-          url:
-            typeof window !== "undefined"
-              ? window.location.origin
-              : "https://localhost:3000",
-          icons: ["https://shapesaga.vercel.app/favicon.ico"],
-        },
-        showQrModal: true,
-      },
-    }),
+    createWalletConnectConnector(),
   ],
   publicClient,
   webSocketPublicClient,

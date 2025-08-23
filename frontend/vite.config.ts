@@ -14,8 +14,9 @@ export default defineConfig({
     global: "globalThis",
   },
   server: {
-    port: 3000,
+    port: parseInt(process.env.PORT || "3000"),
     host: true,
+    strictPort: false, // Allow fallback to another port if the specified port is occupied
   },
   build: {
     outDir: "dist",
