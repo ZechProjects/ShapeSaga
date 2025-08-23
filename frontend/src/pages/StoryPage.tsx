@@ -1,10 +1,82 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useStory } from "../hooks/useStory";
+import { useContributions } from "../hooks/useContributions";
 import { ContentType } from "../lib/contracts";
 
 export function StoryPage() {
+  // State for fetched image URL from metadata
+  const [contributionImageUrl, setContributionImageUrl] = useState<
+    string | null
+  >(null);
+  // ...existing code...
+  // All variable declarations above
+  // ...existing code...
+
+  // Place this block after all variable declarations and before return:
+  // ...existing code...
+
+  // Move useEffect to here, after all hooks and variable declarations
+  // ...existing code...
+
   const { id } = useParams<{ id: string }>();
   const { story, isLoading, error, exists } = useStory(id);
+  const {
+    contributions,
+    isLoading: isLoadingContributions,
+    error: contributionsError,
+  } = useContributions(id);
+  const [currentPage, setCurrentPage] = useState(1);
+  const contributionsPerPage = 1;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(contributions.length / contributionsPerPage)
+  );
+  const currentContribution = contributions[currentPage - 1];
+
+  // After all hooks and variable declarations, before return:
+  useEffect(() => {
+    async function fetchImageFromMetadata() {
+      if (
+        story?.contentType === ContentType.IMAGE &&
+        currentContribution?.metadataURI
+      ) {
+        try {
+          const ipfsUrl = currentContribution.metadataURI.startsWith("ipfs://")
+            ? `https://ipfs.io/ipfs/${currentContribution.metadataURI.replace(
+                "ipfs://",
+                ""
+              )}`
+            : currentContribution.metadataURI;
+          const res = await fetch(ipfsUrl);
+          const metadata = await res.json();
+          const content = metadata.content;
+          const match = content.match(/\(ipfs:\/\/([^)]+)\)/);
+          const ipfsImgHash = match ? match[1] : null;
+
+          if (ipfsImgHash && typeof ipfsImgHash === "string") {
+            const imageUrl = `https://ipfs.io/ipfs/${ipfsImgHash}`;
+            setContributionImageUrl(imageUrl);
+          } else {
+            setContributionImageUrl(null);
+          }
+        } catch (err) {
+          setContributionImageUrl(null);
+        }
+      } else {
+        setContributionImageUrl(null);
+      }
+    }
+    fetchImageFromMetadata();
+  }, [story?.contentType, currentContribution?.metadataURI]);
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
 
   const formatDate = (timestamp: bigint) => {
     // Convert from seconds to milliseconds for JavaScript Date
@@ -207,29 +279,110 @@ export function StoryPage() {
             <p className="text-gray-700 leading-relaxed">{story.description}</p>
           </div>
 
-          {/* Story Chapters/Content Preview */}
+          {/* Story Content & Contributions */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Story Content
+              Story Contributions
             </h2>
-            <div className="bg-gray-50 rounded-lg p-6">
-              <div className="text-sm text-gray-600 mb-2">
-                Content Type: {getContentTypeLabel(story.contentType)}
-              </div>
-              <div className="text-sm text-gray-600 mb-4">
-                Metadata URI:{" "}
-                <code className="bg-white px-2 py-1 rounded text-xs">
-                  {story.metadataURI}
-                </code>
-              </div>
-              <div className="bg-white rounded-md p-4 border border-gray-200">
-                <p className="text-gray-600 italic">
-                  📖 Story content would be loaded from IPFS using the metadata
-                  URI above. This could include text chapters, images, videos,
-                  or interactive elements depending on the content type.
-                </p>
-              </div>
-            </div>
+            {isLoadingContributions && <p>Loading contributions...</p>}
+            {contributionsError && (
+              <p className="text-red-500">
+                Error loading contributions: {contributionsError.message}
+              </p>
+            )}
+            {!isLoadingContributions && !contributionsError && (
+              <>
+                {contributions.length > 0 && currentContribution ? (
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <div className="mb-4 flex justify-between items-center">
+                      <div>
+                        <h3 className="font-bold text-lg">
+                          Contribution #{Number(currentContribution.id)}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          By {formatAddress(currentContribution.contributor)}
+                        </p>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Page {currentPage} of {totalPages}
+                      </div>
+                    </div>
+                    {/* Show image for IMAGE stories, otherwise show link or text */}
+                    <div className="bg-white rounded-md p-4 border border-gray-200 min-h-[100px]">
+                      {story.contentType === ContentType.IMAGE ? (
+                        <div className="flex flex-col items-center">
+                          {contributionImageUrl ? (
+                            <img
+                              src={contributionImageUrl}
+                              alt="Story Contribution"
+                              className="max-w-full max-h-96 rounded shadow"
+                            />
+                          ) : (
+                            <p className="text-gray-500 italic">
+                              Image not found in metadata.
+                            </p>
+                          )}
+                          <a
+                            href={
+                              currentContribution.metadataURI.startsWith(
+                                "ipfs://"
+                              )
+                                ? `https://ipfs.io/ipfs/${currentContribution.metadataURI.replace(
+                                    "ipfs://",
+                                    ""
+                                  )}`
+                                : currentContribution.metadataURI
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 text-xs text-blue-600 underline"
+                          >
+                            View Metadata on IPFS
+                          </a>
+                        </div>
+                      ) : (
+                        <p className="text-gray-600 italic">
+                          Contribution content from IPFS for{" "}
+                          <code className="text-xs bg-gray-100 p-1 rounded">
+                            {currentContribution.metadataURI}
+                          </code>{" "}
+                          would be displayed here.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 px-4 bg-gray-50 rounded-lg">
+                    <p className="text-gray-600">
+                      This story is just beginning.
+                    </p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      Be the first to add a chapter!
+                    </p>
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-end items-center mt-4 space-x-2">
+                    <button
+                      onClick={handlePrevPage}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 bg-white border border-gray-300 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 bg-white border border-gray-300 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Action Buttons */}

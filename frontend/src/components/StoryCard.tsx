@@ -28,7 +28,7 @@ export function StoryCard({ story }: StoryCardProps) {
       case ContentType.TEXT:
         return "Text";
       case ContentType.IMAGE:
-        return "Image";
+        return "Comic";
       case ContentType.VIDEO:
         return "Video";
       default:
@@ -50,8 +50,16 @@ export function StoryCard({ story }: StoryCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden">
-      <div className="p-6">
+    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 overflow-hidden flex flex-col h-full">
+      <div className="p-6 flex-1 flex flex-col">
+        {/* Active Tag Above Title */}
+        {story.isActive && (
+          <div className="mb-2">
+            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full whitespace-nowrap inline-block">
+              Active
+            </span>
+          </div>
+        )}
         {/* Story Header */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
@@ -75,25 +83,21 @@ export function StoryCard({ story }: StoryCardProps) {
 
         {/* Story Stats */}
         <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 min-w-0">
             <span className="flex items-center space-x-1">
               <span>📚</span>
-              <span>{Number(story.totalContributions)} contributions</span>
+              <span>
+                {Number(story.totalContributions)}{" "}
+                {Number(story.totalContributions) === 1
+                  ? "contribution"
+                  : "contributions"}
+              </span>
             </span>
             <span className="flex items-center space-x-1">
               <span>💰</span>
               <span>{formatRewardPool(story.rewardPool)}</span>
             </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="text-xs">
-              Created {formatDate(story.createdAt)}
-            </span>
-            {story.isActive && (
-              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                Active
-              </span>
-            )}
+            {/* Active tag moved above title */}
           </div>
         </div>
 
@@ -108,9 +112,12 @@ export function StoryCard({ story }: StoryCardProps) {
 
           <div className="flex items-center space-x-2">
             {story.isActive && (
-              <button className="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors duration-200">
+              <Link
+                to={`/story/${story.id}/contribute`}
+                className="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors duration-200"
+              >
                 Contribute
-              </button>
+              </Link>
             )}
             <button className="text-gray-400 hover:text-gray-600 transition-colors duration-200">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -120,6 +127,11 @@ export function StoryCard({ story }: StoryCardProps) {
             </button>
           </div>
         </div>
+        {/* Created Date Below Buttons */}
+      </div>
+      {/* Created Date Bottom Aligned */}
+      <div className="px-6 pb-4 text-xs text-gray-500 text-left mt-auto">
+        Created {formatDate(story.createdAt)}
       </div>
     </div>
   );

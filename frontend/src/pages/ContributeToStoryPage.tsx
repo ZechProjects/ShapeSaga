@@ -5,6 +5,7 @@ import { useCreateContribution } from "../hooks/useCreateContribution";
 import { ContentType } from "../lib/contracts";
 import { uploadFileToIPFS } from "../lib/ipfs";
 import toast from "react-hot-toast";
+import { generateImage } from "../lib/ai";
 
 export function ContributeToStoryPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +33,8 @@ export function ContributeToStoryPage() {
   const [authorNotes, setAuthorNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [prompt, setPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Handle file upload for media content
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +49,35 @@ export function ContributeToStoryPage() {
         const url = URL.createObjectURL(selectedFile);
         setPreviewUrl(url);
       }
+    }
+  };
+
+  const handleGenerateImage = async () => {
+    if (!prompt.trim()) {
+      toast.error("Please enter a prompt for the image.");
+      return;
+    }
+    setIsGenerating(true);
+    setPreviewUrl("");
+    if (file) {
+      setFile(null);
+    }
+
+    try {
+      const imageBlob = await generateImage(prompt);
+      const imageFile = new File(
+        [imageBlob],
+        `${prompt.replace(/\s/g, "_")}.jpg`,
+        { type: "image/jpeg" }
+      );
+      setFile(imageFile);
+      const url = URL.createObjectURL(imageFile);
+      setPreviewUrl(url);
+    } catch (error) {
+      console.error("Error generating image:", error);
+      toast.error("Failed to generate image. Please try again.");
+    } finally {
+      setIsGenerating(false);
     }
   };
 
@@ -371,32 +403,61 @@ export function ContributeToStoryPage() {
             />
           </div>
 
-          {/* File Upload (for Image/Video stories) */}
-          {(story.contentType === ContentType.IMAGE ||
-            story.contentType === ContentType.VIDEO) && (
+          {/* Image Generation (for Image stories) */}
+          {story.contentType === ContentType.IMAGE && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-900 mb-2">
-                {story.contentType === ContentType.IMAGE
-                  ? "Upload Image"
-                  : "Upload Video"}
+                Generate Image from Prompt
+              </label>
+              <div className="flex items-center space-x-2 mb-2">
+                <input
+                  type="text"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., a futuristic city skyline at sunset"
+                />
+                <button
+                  type="button"
+                  onClick={handleGenerateImage}
+                  disabled={isGenerating}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isGenerating ? "Generating..." : "Generate"}
+                </button>
+              </div>
+              {isGenerating && (
+                <div className="text-center p-4">
+                  <div className="animate-pulse">Generating your image...</div>
+                </div>
+              )}
+              {previewUrl && (
+                <div className="mt-4">
+                  <img
+                    src={previewUrl}
+                    alt="Generated preview"
+                    className="mx-auto h-48 w-auto object-cover rounded-md"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* File Upload (for Video stories) */}
+          {story.contentType === ContentType.VIDEO && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Upload Video
               </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors duration-200">
                 <div className="space-y-1 text-center">
                   {previewUrl ? (
                     <div className="mb-4">
-                      {story.contentType === ContentType.IMAGE ? (
-                        <img
-                          src={previewUrl}
-                          alt="Preview"
-                          className="mx-auto h-32 w-auto object-cover rounded-md"
-                        />
-                      ) : (
-                        <video
-                          src={previewUrl}
-                          className="mx-auto h-32 w-auto rounded-md"
-                          controls
-                        />
-                      )}
+                      <video
+                        src={previewUrl}
+                        className="mx-auto h-32 w-auto rounded-md"
+                        controls
+                      />
                     </div>
                   ) : (
                     <svg
@@ -431,9 +492,7 @@ export function ContributeToStoryPage() {
                     <p className="pl-1">or drag and drop</p>
                   </div>
                   <p className="text-xs text-gray-500">
-                    {story.contentType === ContentType.IMAGE
-                      ? "PNG, JPG, GIF up to 10MB"
-                      : "MP4, MOV, AVI up to 100MB"}
+                    MP4, MOV, AVI up to 100MB
                   </p>
                 </div>
               </div>
