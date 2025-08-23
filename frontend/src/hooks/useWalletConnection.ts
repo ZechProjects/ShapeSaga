@@ -1,12 +1,11 @@
 import { useAccount, useNetwork } from "wagmi";
-import { shapeMainnet, shapeTestnetConfig } from "../lib/wagmi";
+import { shapeTestnetConfig } from "../lib/wagmi";
 
 export function useWalletConnection() {
   const { address, isConnected, isConnecting } = useAccount();
   const { chain } = useNetwork();
 
-  const isOnShapeNetwork =
-    chain?.id === shapeMainnet.id || chain?.id === shapeTestnetConfig.id;
+  const isOnShapeNetwork = chain?.id === shapeTestnetConfig.id;
   const isOnTestnet = chain?.id === shapeTestnetConfig.id;
 
   const formatAddress = (addr: string) => {
