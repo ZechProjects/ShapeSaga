@@ -7,7 +7,10 @@ interface StoryCardProps {
 
 export function StoryCard({ story }: StoryCardProps) {
   const formatDate = (timestamp: bigint) => {
-    return new Date(Number(timestamp)).toLocaleDateString();
+    // Convert from seconds to milliseconds for JavaScript Date
+    // Smart contract timestamps are in seconds, but Date expects milliseconds
+    const timestampMs = Number(timestamp) * 1000;
+    return new Date(timestampMs).toLocaleDateString();
   };
 
   const formatAddress = (address: string) => {

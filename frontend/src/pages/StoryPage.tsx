@@ -7,7 +7,10 @@ export function StoryPage() {
   const { story, isLoading, error, exists } = useStory(id);
 
   const formatDate = (timestamp: bigint) => {
-    return new Date(Number(timestamp)).toLocaleDateString("en-US", {
+    // Convert from seconds to milliseconds for JavaScript Date
+    // Smart contract timestamps are in seconds, but Date expects milliseconds
+    const timestampMs = Number(timestamp) * 1000;
+    return new Date(timestampMs).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",

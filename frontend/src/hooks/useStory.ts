@@ -125,7 +125,7 @@ function createMockStory(storyId: bigint): Story {
       `This is the description for story ${storyId}. A thrilling adventure awaits!`,
     contentType: contentTypes[id % contentTypes.length],
     metadataURI: `ipfs://mock-metadata-${storyId}`,
-    createdAt: BigInt(Date.now() - Number(storyId) * 86400000), // Stagger dates
+    createdAt: BigInt(Math.floor(Date.now() / 1000) - Number(storyId) * 86400), // Convert to seconds and stagger dates
     totalContributions: BigInt(Math.floor(Math.random() * 15) + 1),
     isActive: Math.random() > 0.2, // 80% chance of being active
     rewardPool: BigInt(Math.floor(Math.random() * 2000000000000000000)), // 0-2 ETH
