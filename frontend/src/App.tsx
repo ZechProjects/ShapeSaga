@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout";
 import { HomePage } from "./pages/HomePage";
 import { StoriesPage } from "./pages/StoriesPage.tsx";
 import { ContributorsPage } from "./pages/ContributorsPage.tsx";
+import { ContributorProfilePage } from "./pages/ContributorProfilePage.tsx";
 import { CreateStoryPage } from "./pages/CreateStoryPage.tsx";
 import { StoryPage } from "./pages/StoryPage.tsx";
 import { ContributeToStoryPage } from "./pages/ContributeToStoryPage.tsx";
@@ -16,6 +17,10 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/stories" element={<StoriesPage />} />
         <Route path="/contributors" element={<ContributorsPage />} />
+        <Route
+          path="/contributor/:address"
+          element={<ContributorProfilePage />}
+        />
         <Route path="/create" element={<CreateStoryPage />} />
         <Route path="/story/:id" element={<StoryPage />} />
         <Route

@@ -24,6 +24,7 @@ export function StoryPage() {
   const [selectedNode, setSelectedNode] = useState<any>(null);
   const [isTreeExpanded, setIsTreeExpanded] = useState(false);
   const [shareButtonText, setShareButtonText] = useState("Share");
+  const [isFocusedMode, setIsFocusedMode] = useState(false);
 
   // Select the first contribution by default when tree loads
   useEffect(() => {
@@ -175,6 +176,11 @@ export function StoryPage() {
     }
   };
 
+  // Handle toggling focused mode
+  const handleToggleFocusedMode = () => {
+    setIsFocusedMode(!isFocusedMode);
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -235,119 +241,141 @@ export function StoryPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* Back to Stories */}
-      <div className="mb-6">
-        <Link
-          to="/stories"
-          className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200"
-        >
-          <svg
-            className="w-4 h-4 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+    <div
+      className={`${
+        isFocusedMode ? "min-h-screen" : "max-w-4xl mx-auto px-4 py-8"
+      }`}
+    >
+      {/* Back to Stories - Always visible but styled differently in focused mode */}
+      {!isFocusedMode && (
+        <div className="mb-6">
+          <Link
+            to="/stories"
+            className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Back to Stories
-        </Link>
-      </div>
+            <svg
+              className="w-4 h-4 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Back to Stories
+          </Link>
+        </div>
+      )}
 
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        {/* Story Header */}
-        <div className="px-8 py-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {story.title}
-              </h1>
-              <div className="flex items-center space-x-4 text-sm text-gray-600">
-                <span className="flex items-center space-x-1">
-                  <span>👤</span>
-                  <span>By {formatAddress(story.creator)}</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <span>📅</span>
-                  <span>Created {formatDate(story.createdAt)}</span>
-                </span>
-                <span className="flex items-center space-x-1">
-                  <span>{getContentTypeIcon(story.contentType)}</span>
-                  <span>{getContentTypeLabel(story.contentType)}</span>
-                </span>
+      <div
+        className={`bg-white ${
+          isFocusedMode ? "" : "rounded-lg shadow-lg"
+        } overflow-hidden`}
+      >
+        {/* Story Header - Hidden in focused mode */}
+        {!isFocusedMode && (
+          <div className="px-8 py-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  {story.title}
+                </h1>
+                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                  <span className="flex items-center space-x-1">
+                    <span>👤</span>
+                    <span>By {formatAddress(story.creator)}</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <span>📅</span>
+                    <span>Created {formatDate(story.createdAt)}</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <span>{getContentTypeIcon(story.contentType)}</span>
+                    <span>{getContentTypeLabel(story.contentType)}</span>
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              {story.isActive ? (
-                <span className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium">
-                  Active
-                </span>
-              ) : (
-                <span className="bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full font-medium">
-                  Inactive
-                </span>
-              )}
+              <div className="flex items-center space-x-2">
+                {story.isActive ? (
+                  <span className="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full font-medium">
+                    Active
+                  </span>
+                ) : (
+                  <span className="bg-gray-100 text-gray-800 text-sm px-3 py-1 rounded-full font-medium">
+                    Inactive
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Story Stats */}
-        <div className="px-8 py-4 bg-gray-50 border-b border-gray-200">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {!isLoadingMetrics && treeMetrics
-                  ? Number(treeMetrics.totalContributions)
-                  : allContributions.length}
+        {/* Story Stats - Hidden in focused mode */}
+        {!isFocusedMode && (
+          <div className="px-8 py-4 bg-gray-50 border-b border-gray-200">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">
+                  {!isLoadingMetrics && treeMetrics
+                    ? Number(treeMetrics.totalContributions)
+                    : allContributions.length}
+                </div>
+                <div className="text-sm text-gray-600">Total Contributions</div>
               </div>
-              <div className="text-sm text-gray-600">Total Contributions</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {!isLoadingMetrics && treeMetrics
-                  ? Number(treeMetrics.rootContributions)
-                  : contributionTree.length}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {!isLoadingMetrics && treeMetrics
+                    ? Number(treeMetrics.rootContributions)
+                    : contributionTree.length}
+                </div>
+                <div className="text-sm text-gray-600">Root Paths</div>
               </div>
-              <div className="text-sm text-gray-600">Root Paths</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {!isLoadingMetrics && treeMetrics
-                  ? Number(treeMetrics.branchCount)
-                  : allContributions.filter((c) => c.isBranch).length}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">
+                  {!isLoadingMetrics && treeMetrics
+                    ? Number(treeMetrics.branchCount)
+                    : allContributions.filter((c) => c.isBranch).length}
+                </div>
+                <div className="text-sm text-gray-600">Branches</div>
               </div>
-              <div className="text-sm text-gray-600">Branches</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600">
-                {!isLoadingMetrics && treeMetrics
-                  ? Number(treeMetrics.maxDepth)
-                  : Math.max(...contributionTree.map((n) => getMaxDepth(n)), 0)}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">
+                  {!isLoadingMetrics && treeMetrics
+                    ? Number(treeMetrics.maxDepth)
+                    : Math.max(
+                        ...contributionTree.map((n) => getMaxDepth(n)),
+                        0
+                      )}
+                </div>
+                <div className="text-sm text-gray-600">Max Depth</div>
               </div>
-              <div className="text-sm text-gray-600">Max Depth</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-indigo-600">
-                {formatRewardPool(story.rewardPool)}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-indigo-600">
+                  {formatRewardPool(story.rewardPool)}
+                </div>
+                <div className="text-sm text-gray-600">Reward Pool</div>
               </div>
-              <div className="text-sm text-gray-600">Reward Pool</div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Story Content */}
-        <div className="px-8 py-6">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-3">
-              About This Story
-            </h2>
-            <p className="text-gray-700 leading-relaxed">{story.description}</p>
-          </div>
+        <div className={`${isFocusedMode ? "px-4 py-4" : "px-8 py-6"}`}>
+          {/* Story Description - Hidden in focused mode */}
+          {!isFocusedMode && (
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-3">
+                About This Story
+              </h2>
+              <p className="text-gray-700 leading-relaxed">
+                {story.description}
+              </p>
+            </div>
+          )}
 
           {/* Story Content & Contributions */}
           <div className="mb-8">
@@ -367,60 +395,137 @@ export function StoryPage() {
 
             {!isLoadingContributions && !contributionsError && (
               <div className="space-y-6">
-                {/* Tree Structure */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                    <button
-                      onClick={() => setIsTreeExpanded(!isTreeExpanded)}
-                      className="flex items-center justify-between w-full text-left"
-                    >
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Table of Contents
-                      </h3>
-                      <svg
-                        className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
-                          isTreeExpanded ? "rotate-180" : ""
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                {/* Tree Structure - Hidden in focused mode */}
+                {!isFocusedMode && (
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                      <button
+                        onClick={() => setIsTreeExpanded(!isTreeExpanded)}
+                        className="flex items-center justify-between w-full text-left"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  {isTreeExpanded && (
-                    <div className="p-4">
-                      <ContributionTree
-                        nodes={filterTreeByDepth(contributionTree, 5)}
-                        onSelectNode={setSelectedNode}
-                        selectedNodeId={selectedNode?.contribution.id.toString()}
-                        storyContentType={
-                          story?.contentType || ContentType.TEXT
-                        }
-                      />
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Table of Contents
+                        </h3>
+                        <svg
+                          className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                            isTreeExpanded ? "rotate-180" : ""
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </button>
                     </div>
-                  )}
-                </div>
+                    {isTreeExpanded && (
+                      <div className="p-4">
+                        <ContributionTree
+                          nodes={filterTreeByDepth(contributionTree, 5)}
+                          onSelectNode={setSelectedNode}
+                          selectedNodeId={selectedNode?.contribution.id.toString()}
+                          storyContentType={
+                            story?.contentType || ContentType.TEXT
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Content Viewer */}
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  {/* Navigation Header */}
+                <div
+                  className={`${
+                    isFocusedMode ? "" : "border border-gray-200 rounded-lg"
+                  } overflow-hidden`}
+                >
+                  {/* Navigation Header with Focused Mode Toggle */}
                   {selectedNode && (
-                    <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Contents
-                      </h3>
+                    <div
+                      className={`${
+                        isFocusedMode
+                          ? "bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10"
+                          : "bg-gray-50 px-4 py-3 border-b border-gray-200"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Contents
+                        </h3>
+                        <div className="flex items-center space-x-2">
+                          {/* Focused Mode Toggle */}
+                          <button
+                            onClick={handleToggleFocusedMode}
+                            className={`inline-flex items-center px-3 py-1 text-sm rounded-md transition-colors duration-200 ${
+                              isFocusedMode
+                                ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }`}
+                            title={
+                              isFocusedMode
+                                ? "Exit focused mode"
+                                : "Enter focused mode"
+                            }
+                          >
+                            <svg
+                              className="w-4 h-4 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              {isFocusedMode ? (
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"
+                                />
+                              ) : (
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3"
+                                />
+                              )}
+                            </svg>
+                            {isFocusedMode ? "Exit Focus" : "Focus"}
+                          </button>
+                          {/* Back to Stories in Focused Mode */}
+                          {isFocusedMode && (
+                            <Link
+                              to="/stories"
+                              className="inline-flex items-center px-3 py-1 text-sm bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-md transition-colors duration-200"
+                              title="Back to Stories"
+                            >
+                              <svg
+                                className="w-4 h-4 mr-1"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 19l-7-7 7-7"
+                                />
+                              </svg>
+                              Back
+                            </Link>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
 
                   {/* Content */}
-                  <div className="p-4">
+                  <div className={`${isFocusedMode ? "px-4 py-4" : "p-4"}`}>
                     <ContributionViewer
                       node={selectedNode}
                       storyContentType={story?.contentType || ContentType.TEXT}
@@ -534,13 +639,62 @@ export function StoryPage() {
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-            <div className="flex items-center space-x-4">
-              {story.isActive && (
-                <Link
-                  to={`/story/${id}/contribute`}
-                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
+          {/* Action Buttons - Hidden in focused mode */}
+          {!isFocusedMode && (
+            <div className="flex items-center justify-between border-t border-gray-200 pt-6">
+              <div className="flex items-center space-x-4">
+                {story.isActive && (
+                  <Link
+                    to={`/story/${id}/contribute`}
+                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
+                  >
+                    <svg
+                      className="w-4 h-4 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    Contribute to Story
+                  </Link>
+                )}
+                <button
+                  onClick={handleToggleFavorite}
+                  className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                    id && isFavorite(id)
+                      ? "bg-red-100 text-red-700 hover:bg-red-200"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill={id && isFavorite(id) ? "currentColor" : "none"}
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                  {id && isFavorite(id)
+                    ? "Remove from Favorites"
+                    : "Add to Favorites"}
+                </button>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleShare}
+                  className="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200"
+                  title="Share this story"
                 >
                   <svg
                     className="w-4 h-4 mr-2"
@@ -552,61 +706,14 @@ export function StoryPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
                     />
                   </svg>
-                  Contribute to Story
-                </Link>
-              )}
-              <button
-                onClick={handleToggleFavorite}
-                className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-                  id && isFavorite(id)
-                    ? "bg-red-100 text-red-700 hover:bg-red-200"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill={id && isFavorite(id) ? "currentColor" : "none"}
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-                {id && isFavorite(id)
-                  ? "Remove from Favorites"
-                  : "Add to Favorites"}
-              </button>
+                  {shareButtonText}
+                </button>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={handleShare}
-                className="inline-flex items-center px-4 py-2 text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200"
-                title="Share this story"
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
-                  />
-                </svg>
-                {shareButtonText}
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { Address } from "viem";
+import { Link } from "react-router-dom";
 import { Contributor } from "../hooks/useContributors";
 
 interface ContributorCardProps {
@@ -135,15 +136,12 @@ export function ContributorCard({ contributor }: ContributorCardProps) {
           >
             Copy Address
           </button>
-          <button
-            onClick={() => {
-              // This could link to a profile page or filter stories by this contributor
-              console.log("View profile for", contributor.address);
-            }}
-            className="flex-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 px-3 rounded-md transition-colors duration-200"
+          <Link
+            to={`/contributor/${contributor.address}`}
+            className="flex-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 px-3 rounded-md transition-colors duration-200 text-center"
           >
             View Profile
-          </button>
+          </Link>
         </div>
       </div>
     </div>
