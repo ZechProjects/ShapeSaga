@@ -18,16 +18,12 @@ module.exports = {
       chainId: 1337,
     },
     "shape-testnet": {
-      url:
-        process.env.SHAPE_TESTNET_RPC_URL ||
-        "https://testnet-rpc.shape.network",
+      url: process.env.SHAPE_TESTNET_RPC_URL || "https://sepolia.shape.network",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 11011, // Shape testnet chain ID
     },
     "shape-mainnet": {
-      url:
-        process.env.SHAPE_MAINNET_RPC_URL ||
-        "https://mainnet-rpc.shape.network",
+      url: process.env.SHAPE_MAINNET_RPC_URL || "https://mainnet.shape.network",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       chainId: 360, // Shape mainnet chain ID
     },

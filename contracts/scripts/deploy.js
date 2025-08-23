@@ -56,9 +56,9 @@ async function main() {
 
   // Add initial funding to reward system
   console.log("\n💰 Adding initial funding to RewardSystem...");
-  const initialFunding = ethers.parseEther("1.0"); // 1 ETH
+  const initialFunding = ethers.parseEther("0.001"); // 0.001 ETH
   await rewardSystem.addToPlatformRewardPool({ value: initialFunding });
-  console.log("✅ Added 1 ETH to platform reward pool");
+  console.log("✅ Added 0.001 ETH to platform reward pool");
 
   console.log("\n📋 Deployment Summary:");
   console.log("=".repeat(50));
