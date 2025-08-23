@@ -11,14 +11,17 @@ export function ContributorProfilePage() {
     "overview" | "stories" | "contributions" | "activity"
   >("overview");
 
-  // Validate address
+  // Call hooks before any early returns
+  const { contributorProfile, isLoading, error } = useContributor(
+    (address && isAddress(address)
+      ? address
+      : "0x0000000000000000000000000000000000000000") as Address
+  );
+
+  // Validate address after hooks
   if (!address || !isAddress(address)) {
     return <Navigate to="/contributors" replace />;
   }
-
-  const { contributorProfile, isLoading, error } = useContributor(
-    address as Address
-  );
 
   const formatAddress = (addr: Address) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;

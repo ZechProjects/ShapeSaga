@@ -19,18 +19,20 @@ export function ContributorsPage() {
     })
     .sort((a, b) => {
       switch (sortBy) {
-        case "activity":
+        case "activity": {
           const aActivity = a.totalStories + a.totalContributions;
           const bActivity = b.totalStories + b.totalContributions;
           return bActivity - aActivity;
+        }
         case "stories":
           return b.totalStories - a.totalStories;
         case "contributions":
           return b.totalContributions - a.totalContributions;
-        case "votes":
+        case "votes": {
           const aVotes = a.totalUpvotes - a.totalDownvotes;
           const bVotes = b.totalUpvotes - b.totalDownvotes;
           return bVotes - aVotes;
+        }
         case "newest":
           if (!a.joinedAt || !b.joinedAt) return 0;
           return (
