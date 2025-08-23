@@ -1,7 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { HomePage } from "./pages/HomePage";
-import { ExplorePage } from "./pages/ExplorePage.tsx";
+import { StoriesPage } from "./pages/StoriesPage.tsx";
+import { ContributorsPage } from "./pages/ContributorsPage.tsx";
 import { CreateStoryPage } from "./pages/CreateStoryPage.tsx";
 import { StoryPage } from "./pages/StoryPage.tsx";
 import { ContributeToStoryPage } from "./pages/ContributeToStoryPage.tsx";
@@ -13,7 +14,8 @@ function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/stories" element={<StoriesPage />} />
+        <Route path="/contributors" element={<ContributorsPage />} />
         <Route path="/create" element={<CreateStoryPage />} />
         <Route path="/story/:id" element={<StoryPage />} />
         <Route

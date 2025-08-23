@@ -12,7 +12,8 @@ export function Layout({ children }: LayoutProps) {
 
   const navItems = [
     { path: "/", label: "Home" },
-    { path: "/explore", label: "Explore" },
+    { path: "/stories", label: "Stories" },
+    { path: "/contributors", label: "Contributors" },
     { path: "/create", label: "Create" },
     { path: "/profile", label: "Profile" },
     { path: "/rewards", label: "Rewards" },

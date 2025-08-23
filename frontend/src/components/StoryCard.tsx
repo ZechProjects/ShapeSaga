@@ -41,26 +41,117 @@ export function StoryCard({ story }: StoryCardProps) {
       case ContentType.TEXT:
         return "📝";
       case ContentType.IMAGE:
-        return "🖼️";
+        return "🎨";
       case ContentType.VIDEO:
-        return "🎥";
+        return "🎬";
       default:
         return "📄";
     }
   };
 
+  const getContentSpecificLabel = (contentType: ContentType, count: number) => {
+    switch (contentType) {
+      case ContentType.TEXT:
+        return count === 1 ? "Chapter" : "Chapters";
+      case ContentType.IMAGE:
+        return count === 1 ? "Panel" : "Panels";
+      case ContentType.VIDEO:
+        return count === 1 ? "Scene" : "Scenes";
+      default:
+        return count === 1 ? "Part" : "Parts";
+    }
+  };
+
+  const getCardStyles = (contentType: ContentType) => {
+    switch (contentType) {
+      case ContentType.TEXT:
+        return {
+          shadow: "bg-gray-200",
+          gradient: "bg-gradient-to-br from-stone-50 to-amber-50",
+          border: "border-stone-200",
+          headerGradient: "bg-gradient-to-r from-stone-100 to-amber-100",
+          headerBorder: "border-stone-200",
+          accent: "bg-blue-50 text-blue-700 border-blue-200",
+        };
+      case ContentType.IMAGE:
+        return {
+          shadow: "bg-purple-200",
+          gradient: "bg-gradient-to-br from-purple-50 to-pink-50",
+          border: "border-purple-200",
+          headerGradient: "bg-gradient-to-r from-purple-100 to-pink-100",
+          headerBorder: "border-purple-200",
+          accent: "bg-purple-50 text-purple-700 border-purple-200",
+        };
+      case ContentType.VIDEO:
+        return {
+          shadow: "bg-red-200",
+          gradient: "bg-gradient-to-br from-red-50 to-orange-50",
+          border: "border-red-200",
+          headerGradient: "bg-gradient-to-r from-red-100 to-orange-100",
+          headerBorder: "border-red-200",
+          accent: "bg-red-50 text-red-700 border-red-200",
+        };
+      default:
+        return {
+          shadow: "bg-gray-200",
+          gradient: "bg-gradient-to-br from-stone-50 to-amber-50",
+          border: "border-stone-200",
+          headerGradient: "bg-gradient-to-r from-stone-100 to-amber-100",
+          headerBorder: "border-stone-200",
+          accent: "bg-blue-50 text-blue-700 border-blue-200",
+        };
+    }
+  };
+
+  const getActionButtonStyles = (contentType: ContentType) => {
+    switch (contentType) {
+      case ContentType.TEXT:
+        return {
+          primary: "bg-blue-600 hover:bg-blue-700",
+          secondary:
+            "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200",
+        };
+      case ContentType.IMAGE:
+        return {
+          primary: "bg-purple-600 hover:bg-purple-700",
+          secondary:
+            "bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200",
+        };
+      case ContentType.VIDEO:
+        return {
+          primary: "bg-red-600 hover:bg-red-700",
+          secondary: "bg-red-100 text-red-700 border-red-200 hover:bg-red-200",
+        };
+      default:
+        return {
+          primary: "bg-blue-600 hover:bg-blue-700",
+          secondary:
+            "bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200",
+        };
+    }
+  };
+
+  const cardStyles = getCardStyles(story.contentType);
+  const buttonStyles = getActionButtonStyles(story.contentType);
+
   return (
     <div className="relative group">
       {/* Subtle book spine shadow effect */}
-      <div className="absolute inset-0 bg-gray-200 rounded-r-md transform translate-x-0.5 translate-y-0.5"></div>
+      <div
+        className={`absolute inset-0 ${cardStyles.shadow} rounded-r-md transform translate-x-0.5 translate-y-0.5`}
+      ></div>
 
       {/* Main book cover */}
-      <div className="relative bg-gradient-to-br from-stone-50 to-amber-50 border border-stone-200 rounded-md shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col h-full">
+      <div
+        className={`relative ${cardStyles.gradient} border ${cardStyles.border} rounded-md shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col h-full`}
+      >
         {/* Subtle texture overlay */}
         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent opacity-50 pointer-events-none"></div>
 
         {/* Header strip */}
-        <div className="relative bg-gradient-to-r from-stone-100 to-amber-100 p-3 border-b border-stone-200">
+        <div
+          className={`relative ${cardStyles.headerGradient} p-3 border-b ${cardStyles.headerBorder}`}
+        >
           <div className="flex items-center justify-between">
             {/* Active Tag */}
             {story.isActive && (
@@ -70,7 +161,9 @@ export function StoryCard({ story }: StoryCardProps) {
             )}
 
             {/* Content Type Badge */}
-            <div className="bg-white px-2 py-1 rounded border border-stone-200 shadow-sm">
+            <div
+              className={`bg-white px-2 py-1 rounded border ${cardStyles.headerBorder} shadow-sm`}
+            >
               <span className="flex items-center space-x-1 text-sm font-medium text-stone-600">
                 <span>{getContentTypeIcon(story.contentType)}</span>
                 <span>{getContentTypeLabel(story.contentType)}</span>
@@ -95,21 +188,24 @@ export function StoryCard({ story }: StoryCardProps) {
 
           {/* Story Description */}
           <div className="mb-4">
-            <div className="bg-white/60 p-3 rounded border border-stone-200">
+            <div
+              className={`bg-white/60 p-3 rounded border ${cardStyles.headerBorder}`}
+            >
               <p className="text-gray-700 line-clamp-3">{story.description}</p>
             </div>
           </div>
 
           {/* Story Stats */}
           <div className="flex flex-wrap gap-2 mb-4">
-            <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded border border-blue-200">
+            <div className={`${cardStyles.accent} px-3 py-1 rounded`}>
               <span className="flex items-center space-x-1 text-sm">
                 <span>📚</span>
                 <span>
                   {Number(story.totalContributions)}{" "}
-                  {Number(story.totalContributions) === 1
-                    ? "Chapter"
-                    : "Chapters"}
+                  {getContentSpecificLabel(
+                    story.contentType,
+                    Number(story.totalContributions)
+                  )}
                 </span>
               </span>
             </div>
@@ -125,7 +221,7 @@ export function StoryCard({ story }: StoryCardProps) {
           <div className="flex items-center justify-between gap-2 mt-auto">
             <Link
               to={`/story/${story.id}`}
-              className="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-medium rounded hover:bg-blue-700 transition-colors duration-200"
+              className={`flex-1 inline-flex items-center justify-center px-4 py-2 ${buttonStyles.primary} text-white font-medium rounded transition-colors duration-200`}
             >
               📖 View
             </Link>
@@ -133,7 +229,7 @@ export function StoryCard({ story }: StoryCardProps) {
             {story.isActive && (
               <Link
                 to={`/story/${story.id}/contribute`}
-                className="inline-flex items-center px-4 py-2 bg-amber-100 text-amber-700 font-medium rounded border border-amber-200 hover:bg-amber-200 transition-colors duration-200"
+                className={`inline-flex items-center px-4 py-2 ${buttonStyles.secondary} font-medium rounded border transition-colors duration-200`}
               >
                 ✏️ Contribute
               </Link>
@@ -142,10 +238,14 @@ export function StoryCard({ story }: StoryCardProps) {
         </div>
 
         {/* Subtle book pages effect */}
-        <div className="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-stone-100 to-stone-200 border-l border-stone-200"></div>
+        <div
+          className={`absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-stone-100 to-stone-200 border-l ${cardStyles.headerBorder}`}
+        ></div>
 
         {/* Creation Date */}
-        <div className="bg-stone-100 p-2 mt-auto border-t border-stone-200">
+        <div
+          className={`${cardStyles.headerGradient} p-2 mt-auto border-t ${cardStyles.headerBorder}`}
+        >
           <div className="text-center">
             <span className="text-stone-600 text-xs font-medium">
               Created {formatDate(story.createdAt)}
