@@ -7,6 +7,7 @@ import {
   type StoryMetadata,
   type StorySettings,
 } from "../lib/contracts";
+import { WalletTroubleshoot } from "../components/WalletTroubleshoot";
 import toast from "react-hot-toast";
 
 interface StoryFormData {
@@ -692,6 +693,9 @@ export function CreateStoryPage() {
           </div>
         </form>
       </div>
+
+      {/* Wallet Troubleshoot Component */}
+      <WalletTroubleshoot />
     </div>
   );
 }

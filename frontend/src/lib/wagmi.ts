@@ -4,25 +4,7 @@ import { MetaMaskConnector } from "@wagmi/connectors/metaMask";
 import { WalletConnectConnector } from "@wagmi/connectors/walletConnect";
 import { publicProvider } from "wagmi/providers/public";
 
-// Shape Network configuration
-const shapeMainnet = {
-  id: 360,
-  name: "Shape",
-  network: "shape",
-  nativeCurrency: {
-    decimals: 18,
-    name: "Ether",
-    symbol: "ETH",
-  },
-  rpcUrls: {
-    public: { http: ["https://mainnet-rpc.shape.network"] },
-    default: { http: ["https://mainnet-rpc.shape.network"] },
-  },
-  blockExplorers: {
-    default: { name: "Shape Explorer", url: "https://shapescan.xyz" },
-  },
-} as const;
-
+// Shape Testnet configuration
 const shapeTestnetConfig = {
   id: 11011,
   name: "Shape Testnet",
@@ -33,8 +15,8 @@ const shapeTestnetConfig = {
     symbol: "ETH",
   },
   rpcUrls: {
-    public: { http: ["https://testnet-rpc.shape.network"] },
-    default: { http: ["https://testnet-rpc.shape.network"] },
+    public: { http: ["https://sepolia.shape.network"] },
+    default: { http: ["https://sepolia.shape.network"] },
   },
   blockExplorers: {
     default: {
@@ -59,8 +41,19 @@ const projectId =
 export const config = createConfig({
   autoConnect: true,
   connectors: [
-    new InjectedConnector({ chains }),
-    new MetaMaskConnector({ chains }),
+    new InjectedConnector({
+      chains,
+      options: {
+        name: "Browser Wallet",
+        shimDisconnect: true,
+      },
+    }),
+    new MetaMaskConnector({
+      chains,
+      options: {
+        shimDisconnect: true,
+      },
+    }),
     new WalletConnectConnector({
       chains,
       options: {
@@ -74,6 +67,7 @@ export const config = createConfig({
               : "https://localhost:3000",
           icons: ["https://shapesaga.vercel.app/favicon.ico"],
         },
+        showQrModal: true,
       },
     }),
   ],

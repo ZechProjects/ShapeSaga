@@ -29,6 +29,7 @@ export function useCreateStory() {
     write: writeCreateStory,
     isLoading: isWriting,
     error: writeError,
+    reset: resetWrite,
   } = useContractWrite({
     address: CONTRACT_ADDRESSES.STORY_REGISTRY,
     abi: STORY_REGISTRY_ABI,
@@ -41,6 +42,7 @@ export function useCreateStory() {
     error: confirmError,
   } = useWaitForTransaction({
     hash: data?.hash,
+    timeout: 60000, // 60 second timeout
   });
 
   const createStory = async (params: CreateStoryParams) => {
@@ -57,12 +59,14 @@ export function useCreateStory() {
     }
 
     try {
+      // Reset any previous write state
+      resetWrite();
       setIsUploading(true);
 
       // Upload metadata to IPFS
-      toast.loading("Uploading story metadata to IPFS...");
+      const uploadToast = toast.loading("Uploading story metadata to IPFS...");
       const metadataURI = await uploadStoryMetadata(params.metadata);
-      toast.dismiss();
+      toast.dismiss(uploadToast);
       toast.success("Metadata uploaded to IPFS");
 
       // Prepare contract arguments
@@ -71,7 +75,8 @@ export function useCreateStory() {
         : 0n;
 
       // Call smart contract
-      toast.loading("Creating story on blockchain...");
+      const contractToast = toast.loading("Creating story on blockchain...");
+
       writeCreateStory({
         args: [
           params.title,
@@ -82,12 +87,28 @@ export function useCreateStory() {
         ],
         value: rewardPoolValue,
       });
+
+      // Clean up loading toast
+      setTimeout(() => {
+        toast.dismiss(contractToast);
+      }, 5000);
     } catch (error) {
       console.error("Error creating story:", error);
       toast.dismiss();
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create story"
-      );
+
+      if (error instanceof Error) {
+        if (error.message.includes("User rejected")) {
+          toast.error("Transaction was cancelled");
+        } else if (error.message.includes("insufficient funds")) {
+          toast.error("Insufficient funds for transaction");
+        } else if (error.message.includes("network")) {
+          toast.error("Network error. Please check your connection");
+        } else {
+          toast.error(`Failed to create story: ${error.message}`);
+        }
+      } else {
+        toast.error("Failed to create story. Please try again.");
+      }
     } finally {
       setIsUploading(false);
     }
@@ -105,7 +126,17 @@ export function useCreateStory() {
     if (writeError || confirmError) {
       toast.dismiss();
       const error = writeError || confirmError;
-      toast.error(error?.message || "Transaction failed");
+      console.error("Transaction error:", error);
+
+      if (error?.message?.includes("User rejected")) {
+        toast.error("Transaction was cancelled");
+      } else if (error?.message?.includes("insufficient funds")) {
+        toast.error("Insufficient funds for transaction");
+      } else if (error?.message?.includes("network")) {
+        toast.error("Network error. Please try again");
+      } else {
+        toast.error(error?.message || "Transaction failed");
+      }
     }
   }, [writeError, confirmError]);
 
