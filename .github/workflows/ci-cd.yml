@@ -98,3 +98,5 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           vercel-args: "--prod"
           working-directory: frontend
+          github-comment: true
+          github-deployment: false
