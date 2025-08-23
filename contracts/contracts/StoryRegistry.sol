@@ -37,6 +37,7 @@ contract StoryRegistry is Ownable, ReentrancyGuard, Pausable {
     uint256 public nextStoryId = 1;
     uint256 public totalStories;
     uint256 public platformFee = 250; // 2.5% platform fee (basis points)
+    address public contributionManager; // Address of the ContributionManager contract
     
     mapping(uint256 => Story) public stories;
     mapping(uint256 => StorySettings) public storySettings;
@@ -195,13 +196,21 @@ contract StoryRegistry is Ownable, ReentrancyGuard, Pausable {
      * @param _contributor The address of the contributor
      */
     function _addContributor(uint256 _storyId, address _contributor) external {
-        // This should only be called by the ContributionManager contract
-        // In a full implementation, you'd add access control here
+        require(msg.sender == contributionManager, "Only ContributionManager can call this");
         require(_storyId < nextStoryId, "Story does not exist");
         require(stories[_storyId].isActive, "Story is not active");
         
         storyContributors[_storyId].push(_contributor);
         stories[_storyId].totalContributions++;
+    }
+    
+    /**
+     * @dev Set the ContributionManager contract address (only owner)
+     * @param _contributionManager Address of the ContributionManager contract
+     */
+    function setContributionManager(address _contributionManager) external onlyOwner {
+        require(_contributionManager != address(0), "Invalid address");
+        contributionManager = _contributionManager;
     }
     
     /**

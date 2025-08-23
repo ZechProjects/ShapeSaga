@@ -122,6 +122,32 @@ export const CONTRIBUTION_MANAGER_ABI = [
   },
   {
     type: "function",
+    name: "getContributionChildren",
+    inputs: [{ name: "_contributionId", type: "uint256" }],
+    outputs: [{ name: "", type: "uint256[]" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getStoryTreeMetrics",
+    inputs: [{ name: "_storyId", type: "uint256" }],
+    outputs: [
+      { name: "totalContributions", type: "uint256" },
+      { name: "rootContributions", type: "uint256" },
+      { name: "branchCount", type: "uint256" },
+      { name: "maxDepth", type: "uint256" },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "getContributionDepth",
+    inputs: [{ name: "_contributionId", type: "uint256" }],
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "voteOnContribution",
     inputs: [
       { name: "_contributionId", type: "uint256" },
@@ -223,6 +249,22 @@ export interface Contribution {
   upvotes: bigint;
   downvotes: bigint;
   isBranch: boolean;
+}
+
+// Tree structure for contributions
+export interface ContributionNode {
+  contribution: Contribution;
+  children: ContributionNode[];
+  level: number;
+  path: string; // Represents the tree path (e.g., "1.2.1" for nested nodes)
+}
+
+// Tree metrics from smart contract
+export interface StoryTreeMetrics {
+  totalContributions: bigint;
+  rootContributions: bigint;
+  branchCount: bigint;
+  maxDepth: bigint;
 }
 
 // Contribution metadata interface for IPFS

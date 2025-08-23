@@ -32,6 +32,11 @@ async function main() {
     contributionManagerAddress
   );
 
+  // Set ContributionManager address in StoryRegistry
+  console.log("\n🔗 Setting ContributionManager address in StoryRegistry...");
+  await storyRegistry.setContributionManager(contributionManagerAddress);
+  console.log("✅ ContributionManager address set in StoryRegistry");
+
   // Deploy NFTMinter
   console.log("\n🚀 Deploying NFTMinter...");
   const NFTMinter = await ethers.getContractFactory("NFTMinter");

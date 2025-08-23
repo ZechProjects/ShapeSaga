@@ -1,93 +1,32 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useStory } from "../hooks/useStory";
-import { useContributions } from "../hooks/useContributions";
+import { useContributionTree } from "../hooks/useContributionTree";
+import { useStoryTreeMetrics } from "../hooks/useStoryTreeMetrics";
 import { ContentType } from "../lib/contracts";
+import { ContributionTree } from "../components/ContributionTree";
+import { ContributionViewer } from "../components/ContributionViewer";
 
 export function StoryPage() {
-  // State for fetched image URL from metadata
-  const [contributionImageUrl, setContributionImageUrl] = useState<
-    string | null
-  >(null);
-  // State for fetched text content from metadata (for text stories)
-  const [contributionTextContent, setContributionTextContent] = useState<
-    string | null
-  >(null);
-  // ...existing code...
-  // All variable declarations above
-  // ...existing code...
-
-  // Place this block after all variable declarations and before return:
-  // ...existing code...
-
-  // Move useEffect to here, after all hooks and variable declarations
-  // ...existing code...
-
   const { id } = useParams<{ id: string }>();
   const { story, isLoading, error, exists } = useStory(id);
   const {
-    contributions,
+    tree: contributionTree,
+    allContributions,
     isLoading: isLoadingContributions,
     error: contributionsError,
-  } = useContributions(id);
-  const [currentPage, setCurrentPage] = useState(1);
-  const contributionsPerPage = 1;
-  const totalPages = Math.max(
-    1,
-    Math.ceil(contributions.length / contributionsPerPage)
-  );
-  const currentContribution = contributions[currentPage - 1];
+  } = useContributionTree(id);
+  const { metrics: treeMetrics, isLoading: isLoadingMetrics } =
+    useStoryTreeMetrics(id);
 
-  // After all hooks and variable declarations, before return:
+  const [selectedNode, setSelectedNode] = useState<any>(null);
+
+  // Select the first contribution by default when tree loads
   useEffect(() => {
-    async function fetchContributionContent() {
-      if (!currentContribution?.metadataURI) {
-        setContributionImageUrl(null);
-        setContributionTextContent(null);
-        return;
-      }
-      const ipfsUrl = currentContribution.metadataURI.startsWith("ipfs://")
-        ? `https://ipfs.io/ipfs/${currentContribution.metadataURI.replace(
-            "ipfs://",
-            ""
-          )}`
-        : currentContribution.metadataURI;
-      try {
-        const res = await fetch(ipfsUrl);
-        const metadata = await res.json();
-        const content = metadata.content;
-        if (story?.contentType === ContentType.IMAGE) {
-          const match = content.match(/\(ipfs:\/\/([^)]+)\)/);
-          const ipfsImgHash = match ? match[1] : null;
-          if (ipfsImgHash && typeof ipfsImgHash === "string") {
-            const imageUrl = `https://ipfs.io/ipfs/${ipfsImgHash}`;
-            setContributionImageUrl(imageUrl);
-          } else {
-            setContributionImageUrl(null);
-          }
-          setContributionTextContent(null);
-        } else if (story?.contentType === ContentType.TEXT) {
-          setContributionTextContent(content);
-          setContributionImageUrl(null);
-        } else {
-          setContributionImageUrl(null);
-          setContributionTextContent(null);
-        }
-      } catch (err) {
-        setContributionImageUrl(null);
-        setContributionTextContent(null);
-      }
+    if (contributionTree.length > 0 && !selectedNode) {
+      setSelectedNode(contributionTree[0]);
     }
-    fetchContributionContent();
-  }, [story?.contentType, currentContribution?.metadataURI]);
-
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  };
-
-  const handlePrevPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  };
+  }, [contributionTree, selectedNode]);
 
   const formatDate = (timestamp: bigint) => {
     // Convert from seconds to milliseconds for JavaScript Date
@@ -134,6 +73,17 @@ export function StoryPage() {
       default:
         return "📄";
     }
+  };
+
+  // Helper function to calculate max depth in a tree
+  const getMaxDepth = (node: any): number => {
+    if (!node.children || node.children.length === 0) {
+      return node.level;
+    }
+    return Math.max(
+      node.level,
+      ...node.children.map((child: any) => getMaxDepth(child))
+    );
   };
 
   // Loading state
@@ -259,24 +209,44 @@ export function StoryPage() {
 
         {/* Story Stats */}
         <div className="px-8 py-4 bg-gray-50 border-b border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {Number(story.totalContributions)}
+                {!isLoadingMetrics && treeMetrics
+                  ? Number(treeMetrics.totalContributions)
+                  : allContributions.length}
               </div>
-              <div className="text-sm text-gray-600">Contributions</div>
+              <div className="text-sm text-gray-600">Total Contributions</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {formatRewardPool(story.rewardPool)}
+                {!isLoadingMetrics && treeMetrics
+                  ? Number(treeMetrics.rootContributions)
+                  : contributionTree.length}
               </div>
-              <div className="text-sm text-gray-600">Reward Pool</div>
+              <div className="text-sm text-gray-600">Root Paths</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-purple-600">
-                #{story.id.toString()}
+                {!isLoadingMetrics && treeMetrics
+                  ? Number(treeMetrics.branchCount)
+                  : allContributions.filter((c) => c.isBranch).length}
               </div>
-              <div className="text-sm text-gray-600">Story ID</div>
+              <div className="text-sm text-gray-600">Branches</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">
+                {!isLoadingMetrics && treeMetrics
+                  ? Number(treeMetrics.maxDepth)
+                  : Math.max(...contributionTree.map((n) => getMaxDepth(n)), 0)}
+              </div>
+              <div className="text-sm text-gray-600">Max Depth</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-indigo-600">
+                {formatRewardPool(story.rewardPool)}
+              </div>
+              <div className="text-sm text-gray-600">Reward Pool</div>
             </div>
           </div>
         </div>
@@ -295,133 +265,42 @@ export function StoryPage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Story Contributions
             </h2>
-            {isLoadingContributions && <p>Loading contributions...</p>}
-            {contributionsError && (
-              <p className="text-red-500">
-                Error loading contributions: {contributionsError.message}
-              </p>
-            )}
-            {!isLoadingContributions && !contributionsError && (
-              <>
-                {contributions.length > 0 && currentContribution ? (
-                  <div className="bg-gray-50 rounded-lg p-6">
-                    <div className="mb-4 flex justify-between items-center">
-                      <div>
-                        <h3 className="font-bold text-lg">
-                          Contribution #{Number(currentContribution.id)}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          By {formatAddress(currentContribution.contributor)}
-                        </p>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Page {currentPage} of {totalPages}
-                      </div>
-                    </div>
-                    {/* Show image for IMAGE stories, otherwise show link or text */}
-                    <div className="bg-white rounded-md p-4 border border-gray-200 min-h-[100px]">
-                      {story.contentType === ContentType.IMAGE ? (
-                        <div className="flex flex-col items-center">
-                          {contributionImageUrl ? (
-                            <img
-                              src={contributionImageUrl}
-                              alt="Story Contribution"
-                              className="max-w-full max-h-96 rounded shadow"
-                            />
-                          ) : (
-                            <p className="text-gray-500 italic">
-                              Image not found in metadata.
-                            </p>
-                          )}
-                          <a
-                            href={
-                              currentContribution.metadataURI.startsWith(
-                                "ipfs://"
-                              )
-                                ? `https://ipfs.io/ipfs/${currentContribution.metadataURI.replace(
-                                    "ipfs://",
-                                    ""
-                                  )}`
-                                : currentContribution.metadataURI
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 text-xs text-blue-600 underline"
-                          >
-                            View Metadata on IPFS
-                          </a>
-                        </div>
-                      ) : story.contentType === ContentType.TEXT ? (
-                        <div>
-                          {contributionTextContent ? (
-                            <p className="text-gray-800 whitespace-pre-line">
-                              {contributionTextContent}
-                            </p>
-                          ) : (
-                            <p className="text-gray-500 italic">
-                              Text content not found in metadata.
-                            </p>
-                          )}
-                          <a
-                            href={
-                              currentContribution.metadataURI.startsWith(
-                                "ipfs://"
-                              )
-                                ? `https://ipfs.io/ipfs/${currentContribution.metadataURI.replace(
-                                    "ipfs://",
-                                    ""
-                                  )}`
-                                : currentContribution.metadataURI
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 text-xs text-blue-600 underline"
-                          >
-                            View Metadata on IPFS
-                          </a>
-                        </div>
-                      ) : (
-                        <p className="text-gray-600 italic">
-                          Contribution content from IPFS for{" "}
-                          <code className="text-xs bg-gray-100 p-1 rounded">
-                            {currentContribution.metadataURI}
-                          </code>{" "}
-                          would be displayed here.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 px-4 bg-gray-50 rounded-lg">
-                    <p className="text-gray-600">
-                      This story is just beginning.
-                    </p>
-                    <p className="text-gray-500 text-sm mt-1">
-                      Be the first to add a chapter!
-                    </p>
-                  </div>
-                )}
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-end items-center mt-4 space-x-2">
-                    <button
-                      onClick={handlePrevPage}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 bg-white border border-gray-300 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    <button
-                      onClick={handleNextPage}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-white border border-gray-300 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
+            {isLoadingContributions && (
+              <div className="text-center py-8">
+                <div className="animate-pulse">Loading contributions...</div>
+              </div>
+            )}
+
+            {contributionsError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-600">
+                  Error loading contributions: {contributionsError.message}
+                </p>
+              </div>
+            )}
+
+            {!isLoadingContributions && !contributionsError && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Tree Structure */}
+                <div>
+                  <ContributionTree
+                    nodes={contributionTree}
+                    onSelectNode={setSelectedNode}
+                    selectedNodeId={selectedNode?.contribution.id.toString()}
+                    storyContentType={story?.contentType || ContentType.TEXT}
+                  />
+                </div>
+
+                {/* Content Viewer */}
+                <div>
+                  <ContributionViewer
+                    node={selectedNode}
+                    storyContentType={story?.contentType || ContentType.TEXT}
+                    storyId={id}
+                  />
+                </div>
+              </div>
             )}
           </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useStory } from "../hooks/useStory";
 import { useCreateContribution } from "../hooks/useCreateContribution";
+import { useContributionTree } from "../hooks/useContributionTree";
 import { ContentType } from "../lib/contracts";
 import { uploadFileToIPFS } from "../lib/ipfs";
 import toast from "react-hot-toast";
@@ -10,6 +11,9 @@ import { generateImage } from "../lib/ai";
 export function ContributeToStoryPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const searchParams = new URLSearchParams(window.location.search);
+  const parentId = searchParams.get("parent");
+  const isBranchFromUrl = searchParams.get("branch") === "true";
   const {
     story,
     isLoading: storyLoading,
@@ -21,11 +25,16 @@ export function ContributeToStoryPage() {
     isLoading: contributionLoading,
     isSuccess,
   } = useCreateContribution();
+  const { flattenedContributions, isLoading: contributionsLoading } =
+    useContributionTree(id);
 
   // Form state
   const [contributionType, setContributionType] = useState<
     "continue" | "branch"
-  >("continue");
+  >(isBranchFromUrl ? "branch" : "continue");
+  const [parentContributionId, setParentContributionId] = useState<string>(
+    parentId || ""
+  );
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [description, setDescription] = useState("");
@@ -138,6 +147,7 @@ export function ContributeToStoryPage() {
 
       await createContribution({
         storyId: id!,
+        parentContributionId,
         title,
         content: finalContent,
         contentType: story.contentType,
@@ -186,6 +196,27 @@ export function ContributeToStoryPage() {
       default:
         return "*/*";
     }
+  };
+
+  const formatContributionForSelection = (node: any) => {
+    const formatAddress = (address: string) => {
+      return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    };
+
+    const formatDate = (timestamp: bigint) => {
+      const timestampMs = Number(timestamp) * 1000;
+      return new Date(timestampMs).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    };
+
+    const prefix = "  ".repeat(node.level) + (node.level > 0 ? "└─ " : "");
+    const branchLabel = node.contribution.isBranch ? " [Branch]" : "";
+
+    return `${prefix}#${node.contribution.id.toString()}${branchLabel} by ${formatAddress(
+      node.contribution.contributor
+    )} - ${formatDate(node.contribution.createdAt)}`;
   };
 
   if (storyLoading) {
@@ -369,6 +400,39 @@ export function ContributeToStoryPage() {
                 </div>
               </button>
             </div>
+          </div>
+
+          {/* Parent Contribution Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-900 mb-2">
+              Parent Contribution
+            </label>
+            <select
+              value={parentContributionId}
+              onChange={(e) => setParentContributionId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled={contributionsLoading}
+            >
+              <option value="">Start from story beginning (root)</option>
+              {flattenedContributions.map((node) => (
+                <option
+                  key={node.contribution.id.toString()}
+                  value={node.contribution.id.toString()}
+                >
+                  {formatContributionForSelection(node)}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              {contributionType === "continue"
+                ? "Select which contribution to continue from, or leave empty to start from the beginning"
+                : "Select which contribution to branch from, or leave empty to branch from the beginning"}
+              {parentContributionId && (
+                <span className="block mt-1 text-blue-600 font-medium">
+                  Pre-selected: Contribution #{parentContributionId}
+                </span>
+              )}
+            </p>
           </div>
 
           {/* Branch Title (only for branches) */}

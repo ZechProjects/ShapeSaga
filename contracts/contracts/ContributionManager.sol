@@ -50,6 +50,12 @@ contract ContributionManager is Ownable, ReentrancyGuard, Pausable {
     mapping(uint256 => mapping(address => bool)) public hasVoted; // contributionId => user => hasVoted
     mapping(uint256 => mapping(address => bool)) public userVote; // contributionId => user => vote (true=upvote, false=downvote)
     
+    // Tree structure metrics
+    mapping(uint256 => uint256) public storyRootContributions; // storyId => count of root contributions
+    mapping(uint256 => uint256) public storyBranchCount; // storyId => count of branches
+    mapping(uint256 => uint256) public storyMaxDepth; // storyId => maximum tree depth
+    mapping(uint256 => uint256) public contributionDepth; // contributionId => depth from root
+    
     // Events
     event ContributionSubmitted(
         uint256 indexed contributionId,
@@ -101,6 +107,12 @@ contract ContributionManager is Ownable, ReentrancyGuard, Pausable {
         
         uint256 contributionId = nextContributionId++;
         
+        // Calculate depth
+        uint256 depth = 0;
+        if (_parentContributionId > 0) {
+            depth = contributionDepth[_parentContributionId] + 1;
+        }
+        
         contributions[contributionId] = Contribution({
             id: contributionId,
             storyId: _storyId,
@@ -114,9 +126,23 @@ contract ContributionManager is Ownable, ReentrancyGuard, Pausable {
             isBranch: _isBranch
         });
         
+        // Store depth and update metrics
+        contributionDepth[contributionId] = depth;
+        if (depth > storyMaxDepth[_storyId]) {
+            storyMaxDepth[_storyId] = depth;
+        }
+        
         storyContributions[_storyId].push(contributionId);
         userContributions[msg.sender].push(contributionId);
         totalContributions++;
+        
+        // Update tree-specific metrics
+        if (_parentContributionId == 0) {
+            storyRootContributions[_storyId]++;
+        }
+        if (_isBranch) {
+            storyBranchCount[_storyId]++;
+        }
         
         // Add to parent's children if applicable
         if (_parentContributionId > 0) {
@@ -284,6 +310,33 @@ contract ContributionManager is Ownable, ReentrancyGuard, Pausable {
     }
     
     /**
+     * @dev Get story tree metrics
+     * @param _storyId The ID of the story
+     */
+    function getStoryTreeMetrics(uint256 _storyId) external view returns (
+        uint256 totalContributions,
+        uint256 rootContributions,
+        uint256 branchCount,
+        uint256 maxDepth
+    ) {
+        return (
+            storyContributions[_storyId].length,
+            storyRootContributions[_storyId],
+            storyBranchCount[_storyId],
+            storyMaxDepth[_storyId]
+        );
+    }
+    
+    /**
+     * @dev Get contribution depth
+     * @param _contributionId The ID of the contribution
+     */
+    function getContributionDepth(uint256 _contributionId) external view returns (uint256) {
+        require(_contributionId < nextContributionId, "Contribution does not exist");
+        return contributionDepth[_contributionId];
+    }
+    
+    /**
      * @dev Internal function to process contribution approval
      * @param _contributionId The ID of the contribution
      */
@@ -291,8 +344,7 @@ contract ContributionManager is Ownable, ReentrancyGuard, Pausable {
         Contribution storage contribution = contributions[_contributionId];
         
         // Add contributor to story registry
-        // Note: This would require the StoryRegistry to have a function to add contributors
-        // storyRegistry._addContributor(contribution.storyId, contribution.contributor);
+        storyRegistry._addContributor(contribution.storyId, contribution.contributor);
     }
     
     /**
