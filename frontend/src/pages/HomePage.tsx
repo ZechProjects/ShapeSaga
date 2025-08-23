@@ -14,6 +14,19 @@ export function HomePage() {
     .sort((a, b) => Number(b.totalContributions) - Number(a.totalContributions))
     .slice(0, 3);
 
+  const storyElements = [
+    "Once upon a time...",
+    "In a land far away...",
+    "Chapter One",
+    "The End",
+    "To be continued...",
+    "Meanwhile...",
+    "✨ Magic happens ✨",
+    "📚 Stories unfold",
+    "🌟 Dreams come alive",
+    "🔮 Imagination flows",
+  ];
+
   const renderStoriesSection = (
     title: string,
     storiesData: Story[],
@@ -60,57 +73,104 @@ export function HomePage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Hero Section */}
-      <div className="text-center mb-16">
-        <h1 className="text-4xl md:text-5xl font-bold text-gradient mb-6">
-          Welcome to ShapeSaga
-        </h1>
-        <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-          AI-powered collaborative storytelling on Shape Network. Create,
-          contribute, and explore interactive stories with the community.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/explore" className="btn-primary">
-            Explore All Stories
-          </Link>
-          <Link to="/create" className="btn-outline">
-            Create Your Story
-          </Link>
+    <div className="storytelling-bg min-h-screen">
+      {/* Magical sparkle overlay */}
+      <div className="sparkle-overlay"></div>
+
+      {/* Floating story elements */}
+      {storyElements.map((element, index) => (
+        <div key={index} className="story-element">
+          {element}
         </div>
-      </div>
+      ))}
 
-      {/* Latest Stories Section */}
-      {renderStoriesSection(
-        "✨ Latest Stories",
-        latestStories,
-        "No stories available yet. Be the first to create one!"
-      )}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Hero Section */}
+        <div className="text-center mb-16 pt-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-gradient mb-6">
+            Welcome to ShapeSaga
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            AI-powered collaborative storytelling on Shape Network. Create,
+            contribute, and explore interactive stories with the community.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/explore" className="btn-primary">
+              Explore All Stories
+            </Link>
+            <Link to="/create" className="btn-outline">
+              Create Your Story
+            </Link>
+          </div>
+        </div>
 
-      {/* Popular Stories Section */}
-      {renderStoriesSection(
-        "🔥 Most Popular Stories",
-        popularStories,
-        "No popular stories yet. Start contributing to make stories popular!"
-      )}
+        {/* Latest Stories Section */}
+        {renderStoriesSection(
+          "✨ Latest Stories",
+          latestStories,
+          "No stories available yet. Be the first to create one!"
+        )}
 
-      {/* Call to Action Section */}
-      <div className="text-center bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-8 mb-12">
-        <h3 className="text-2xl font-bold text-gray-900 mb-4">
-          Ready to Start Your Adventure?
-        </h3>
-        <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-          Join our community of storytellers and help shape the future of
-          collaborative narratives. Every contribution matters and can earn
-          rewards!
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link to="/create" className="btn-primary">
-            Create a Story
-          </Link>
-          <Link to="/explore" className="btn-outline">
-            Browse Stories
-          </Link>
+        {/* Popular Stories Section */}
+        {renderStoriesSection(
+          "🔥 Most Popular Stories",
+          popularStories,
+          "No popular stories yet. Start contributing to make stories popular!"
+        )}
+
+        {/* Call to Action Section */}
+        <div className="text-center bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-8 mb-12 backdrop-blur-sm bg-opacity-80">
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            Ready to Start Your Adventure?
+          </h3>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Join our community of storytellers and help shape the future of
+            collaborative narratives. Every contribution matters and can earn
+            rewards!
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/create" className="btn-primary">
+              Create a Story
+            </Link>
+            <Link to="/explore" className="btn-outline">
+              Browse Stories
+            </Link>
+          </div>
+        </div>
+
+        {/* Shape Network Credit Section */}
+        <div className="text-center py-12 border-t border-gray-200 bg-white/50 backdrop-blur-sm rounded-lg">
+          <div className="max-w-2xl mx-auto">
+            <h4 className="text-lg font-semibold text-gray-900 mb-3">
+              Powered by Shape Network
+            </h4>
+            <p className="text-gray-600 mb-4">
+              ShapeSaga is built on the innovative Shape Network blockchain,
+              enabling secure, decentralized storytelling and community rewards.
+            </p>
+            <a
+              href="https://shape.network/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+              Learn more about Shape Network
+            </a>
+          </div>
         </div>
       </div>
     </div>
