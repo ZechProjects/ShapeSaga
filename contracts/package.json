@@ -1,0 +1,30 @@
+{
+  "name": "shapesaga-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for ShapeSaga platform on Shape Network",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy:testnet": "npx hardhat run scripts/deploy.js --network shape-testnet",
+    "deploy:mainnet": "npx hardhat run scripts/deploy.js --network shape-mainnet",
+    "verify": "npx hardhat verify --network shape-testnet",
+    "node": "npx hardhat node",
+    "dev": "npx hardhat node"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "hardhat": "^2.19.0",
+    "dotenv": "^16.3.1"
+  },
+  "keywords": [
+    "blockchain",
+    "shape-network",
+    "smart-contracts",
+    "hardhat",
+    "solidity"
+  ],
+  "author": "ShapeSaga Team",
+  "license": "MIT"
+}

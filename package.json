@@ -1,0 +1,28 @@
+{
+  "name": "shape-saga",
+  "version": "1.0.0",
+  "description": "AI-powered collaborative storytelling platform on Shape Network",
+  "main": "index.js",
+  "scripts": {
+    "install:contracts": "cd contracts && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "install:all": "npm run install:contracts && npm run install:frontend",
+    "dev:contracts": "cd contracts && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:contracts": "cd contracts && npm run compile",
+    "build:frontend": "cd frontend && npm run build",
+    "deploy:contracts": "cd contracts && npm run deploy",
+    "test:contracts": "cd contracts && npm run test"
+  },
+  "keywords": [
+    "blockchain",
+    "shape-network",
+    "AI",
+    "storytelling",
+    "hackathon",
+    "smart-contracts",
+    "react"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
