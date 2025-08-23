@@ -12,10 +12,17 @@ module.exports = {
       },
     },
   },
-  defaultNetwork: "shape-testnet",
+  defaultNetwork: "hardhat",
   networks: {
     hardhat: {
       chainId: 1337,
+      accounts: {
+        count: 10,
+        initialIndex: 0,
+        mnemonic: "test test test test test test test test test test test junk",
+        path: "m/44'/60'/0'/0",
+        accountsBalance: "10000000000000000000000", // 10000 ETH per account
+      },
     },
     "shape-testnet": {
       url: process.env.SHAPE_TESTNET_RPC_URL || "https://sepolia.shape.network",
