@@ -12,6 +12,8 @@
     "build:contracts": "cd contracts && npm run compile",
     "build:frontend": "cd frontend && npm run build",
     "deploy:contracts": "cd contracts && npm run deploy",
+    "deploy:contracts:testnet": "cd contracts && npm run deploy:testnet",
+    "deploy:contracts:mainnet": "cd contracts && npm run deploy:mainnet",
     "test:contracts": "cd contracts && npm run test"
   },
   "keywords": [

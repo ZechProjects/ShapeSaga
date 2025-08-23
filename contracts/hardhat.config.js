@@ -12,6 +12,7 @@ module.exports = {
       },
     },
   },
+  defaultNetwork: "shape-testnet",
   networks: {
     hardhat: {
       chainId: 1337,

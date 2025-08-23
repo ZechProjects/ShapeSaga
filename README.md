@@ -81,10 +81,16 @@ npm run compile
 npm run test
 ```
 
-5. Deploy to Shape Network testnet:
+5. Deploy to Shape Network testnet (default):
 
 ```bash
-npm run deploy:testnet
+npm run deploy
+```
+
+Or deploy to mainnet (production):
+
+```bash
+npm run deploy:mainnet
 ```
 
 ### Frontend Development
@@ -178,19 +184,38 @@ npm run test
 
 ## 🚀 Deployment
 
-### Smart Contracts
+This project is configured for automatic deployment using GitHub Actions and Vercel.
+
+### Frontend Deployment (Vercel)
+
+The frontend is automatically deployed to Vercel:
+
+- **Production**: Deploys automatically when pushing to `main` branch
+- **Preview**: Creates preview deployments for pull requests
+- **Free Tier**: Uses Vercel's free plan with generous limits
+
+For detailed setup instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Smart Contracts (Shape Network Testnet)
+
+```bash
+cd contracts
+npm run deploy
+```
+
+For mainnet deployment:
 
 ```bash
 cd contracts
 npm run deploy:mainnet
 ```
 
-### Frontend
+### Manual Frontend Deployment
 
 ```bash
 cd frontend
 npm run build
-# Deploy to your preferred hosting service
+# Build artifacts are in frontend/dist/
 ```
 
 ## 🤝 Contributing

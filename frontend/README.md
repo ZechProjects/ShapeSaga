@@ -81,8 +81,16 @@ src/
 
 The app is configured to work with:
 
-- Shape Mainnet (Chain ID: 360)
-- Shape Testnet (Chain ID: 11011)
+- **Shape Testnet** (Chain ID: 11011) - Default for development
+- **Shape Mainnet** (Chain ID: 360) - For production
+
+The project is configured to use Shape Network testnet by default. To switch to mainnet, update the environment variables:
+
+```bash
+VITE_SHAPE_NETWORK_RPC_URL=https://mainnet-rpc.shape.network
+VITE_SHAPE_NETWORK_CHAIN_ID=360
+VITE_SHAPE_NETWORK_CHAIN_NAME=Shape Mainnet
+```
 
 Make sure your wallet is configured to connect to Shape Network.
 

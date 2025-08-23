@@ -1,0 +1,96 @@
+name: Production Deployment
+
+# This workflow is for production deployments to mainnet
+# It requires manual trigger for safety
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_contracts:
+        description: "Deploy contracts to mainnet"
+        required: true
+        default: false
+        type: boolean
+      deploy_frontend:
+        description: "Deploy frontend to production"
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  # Deploy contracts to mainnet (manual trigger only)
+  deploy-contracts-mainnet:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.deploy_contracts == 'true' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "contracts/package-lock.json"
+
+      - name: Install contract dependencies
+        run: |
+          cd contracts
+          npm ci
+
+      - name: Compile contracts
+        run: |
+          cd contracts
+          npm run compile
+
+      - name: Deploy contracts to mainnet
+        run: |
+          cd contracts
+          npm run deploy:mainnet
+        env:
+          PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY_MAINNET }}
+          SHAPE_MAINNET_RPC_URL: ${{ secrets.SHAPE_MAINNET_RPC_URL }}
+          SHAPE_EXPLORER_API_KEY: ${{ secrets.SHAPE_EXPLORER_API_KEY }}
+
+  # Deploy frontend to production with mainnet config
+  deploy-frontend-production:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.deploy_frontend == 'true' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build frontend for production
+        run: |
+          cd frontend
+          npm run build
+        env:
+          VITE_SHAPE_NETWORK_RPC_URL: ${{ secrets.VITE_SHAPE_NETWORK_RPC_URL_MAINNET }}
+          VITE_SHAPE_NETWORK_CHAIN_ID: 360
+          VITE_SHAPE_NETWORK_CHAIN_NAME: "Shape Mainnet"
+          VITE_STORY_REGISTRY_ADDRESS: ${{ secrets.VITE_STORY_REGISTRY_ADDRESS_MAINNET }}
+          VITE_NFT_MINTER_ADDRESS: ${{ secrets.VITE_NFT_MINTER_ADDRESS_MAINNET }}
+          VITE_REWARD_SYSTEM_ADDRESS: ${{ secrets.VITE_REWARD_SYSTEM_ADDRESS_MAINNET }}
+          VITE_CONTRIBUTION_MANAGER_ADDRESS: ${{ secrets.VITE_CONTRIBUTION_MANAGER_ADDRESS_MAINNET }}
+
+      - name: Deploy to Vercel Production
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: "--prod"
+          working-directory: ./

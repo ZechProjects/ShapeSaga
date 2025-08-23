@@ -152,6 +152,9 @@ blob-report/
 .vercel/
 .netlify/
 
+# Vercel
+.vercel
+
 # Package manager lock files (uncomment the one you're not using)
 # package-lock.json
 # yarn.lock

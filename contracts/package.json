@@ -6,6 +6,7 @@
   "scripts": {
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
+    "deploy": "npx hardhat run scripts/deploy.js --network shape-testnet",
     "deploy:testnet": "npx hardhat run scripts/deploy.js --network shape-testnet",
     "deploy:mainnet": "npx hardhat run scripts/deploy.js --network shape-mainnet",
     "verify": "npx hardhat verify --network shape-testnet",

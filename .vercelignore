@@ -1,0 +1,33 @@
+# Ignore everything except frontend
+
+contracts/
+docs/
+.github/
+.git/
+README.md
+CONTRIBUTING.md
+LICENSE
+package.json
+package-lock.json
+
+# Frontend build artifacts and dependencies
+
+frontend/node_modules/
+frontend/.vite/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# IDE and system files
+
+.DS_Store
+.vscode/
+.idea/
+_.log
+_.tmp
+
+# Development files
+
+\*.md
+!frontend/README.md

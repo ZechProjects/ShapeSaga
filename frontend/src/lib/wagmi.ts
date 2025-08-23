@@ -45,7 +45,7 @@ const shapeTestnetConfig = {
   testnet: true,
 } as const;
 
-// Configure chains
+// Configure chains - prioritizing testnet for development
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [shapeTestnetConfig, shapeMainnet],
   [publicProvider()]
