@@ -1,4 +1,13 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useWalletConnection } from "../hooks/useWalletConnection";
+import { useCreateStory } from "../hooks/useCreateStory";
+import {
+  ContentType,
+  type StoryMetadata,
+  type StorySettings,
+} from "../lib/contracts";
+import toast from "react-hot-toast";
 
 interface StoryFormData {
   name: string;
@@ -15,9 +24,15 @@ interface StoryFormData {
   language: string;
   estimatedDuration: string;
   collaborationMode: "open" | "invite-only" | "solo";
+  rewardPool: string; // ETH amount
+  requireApproval: boolean;
 }
 
 export function CreateStoryPage() {
+  const navigate = useNavigate();
+  const { isConnected, isOnShapeNetwork } = useWalletConnection();
+  const { createStory, isLoading, isSuccess } = useCreateStory();
+
   const [formData, setFormData] = useState<StoryFormData>({
     name: "",
     medium: "text",
@@ -33,6 +48,8 @@ export function CreateStoryPage() {
     language: "English",
     estimatedDuration: "",
     collaborationMode: "open",
+    rewardPool: "0",
+    requireApproval: false,
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,37 +77,103 @@ export function CreateStoryPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate wallet connection
+    if (!isConnected) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
+
+    if (!isOnShapeNetwork) {
+      toast.error("Please switch to Shape Network");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement actual story creation logic
-      console.log("Creating story with data:", formData);
+      // Map form data to content type
+      const contentTypeMap = {
+        text: ContentType.TEXT,
+        comic: ContentType.IMAGE,
+        video: ContentType.VIDEO,
+      };
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Create story metadata for IPFS
+      const metadata: StoryMetadata = {
+        title: formData.name,
+        description: formData.description,
+        genre: formData.genre,
+        language: formData.language,
+        targetAudience: formData.targetAudience,
+        worldTheme: formData.worldTheme,
+        timeline: formData.timeline,
+        estimatedDuration: formData.estimatedDuration,
+        collaborationMode: formData.collaborationMode,
+        characters: {
+          main: formData.mainCharacters,
+          secondary: formData.secondaryCharacters,
+        },
+        structure: {
+          maxChapters: formData.maxChapters,
+          maxBranchesPerChapter: formData.maxBranchesPerChapter,
+        },
+        medium: formData.medium,
+        createdAt: new Date().toISOString(),
+        version: "1.0.0",
+      };
 
-      alert("Story created successfully!");
+      // Create story settings
+      const settings: StorySettings = {
+        allowBranching: formData.maxBranchesPerChapter !== 1,
+        requireApproval: formData.requireApproval,
+        maxContributions:
+          formData.maxChapters === "unlimited"
+            ? 0n
+            : BigInt(formData.maxChapters),
+        contributionReward: 0n, // Can be set later
+      };
 
-      // Reset form
-      setFormData({
-        name: "",
-        medium: "text",
-        mainCharacters: 1,
-        secondaryCharacters: 0,
-        worldTheme: "",
-        timeline: "",
-        maxChapters: 5,
-        maxBranchesPerChapter: 1,
-        description: "",
-        genre: "",
-        targetAudience: "all",
-        language: "English",
-        estimatedDuration: "",
-        collaborationMode: "open",
+      // Create story on blockchain
+      await createStory({
+        title: formData.name,
+        description: formData.description,
+        contentType: contentTypeMap[formData.medium],
+        metadata,
+        settings,
+        rewardPool:
+          formData.rewardPool !== "0" ? formData.rewardPool : undefined,
       });
+
+      // Reset form on success
+      if (isSuccess) {
+        setFormData({
+          name: "",
+          medium: "text",
+          mainCharacters: 1,
+          secondaryCharacters: 0,
+          worldTheme: "",
+          timeline: "",
+          maxChapters: 5,
+          maxBranchesPerChapter: 1,
+          description: "",
+          genre: "",
+          targetAudience: "all",
+          language: "English",
+          estimatedDuration: "",
+          collaborationMode: "open",
+          rewardPool: "0",
+          requireApproval: false,
+        });
+
+        // Navigate to explore page after successful creation
+        setTimeout(() => {
+          navigate("/explore");
+        }, 2000);
+      }
     } catch (error) {
       console.error("Error creating story:", error);
-      alert("Error creating story. Please try again.");
+      toast.error("Error creating story. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -102,6 +185,40 @@ export function CreateStoryPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">
           Create Your Story
         </h1>
+
+        {/* Wallet Connection Status */}
+        {!isConnected && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+            <div className="flex">
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">
+                  Wallet Required
+                </h3>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <p>
+                    Please connect your wallet to create a story on the
+                    blockchain.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isConnected && !isOnShapeNetwork && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+            <div className="flex">
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Wrong Network
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>Please switch to Shape Network to create your story.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
@@ -423,11 +540,91 @@ export function CreateStoryPage() {
                   placeholder="e.g., 3 months, 1 year, ongoing"
                 />
               </div>
+
+              <div>
+                <label
+                  htmlFor="rewardPool"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Initial Reward Pool (ETH)
+                </label>
+                <input
+                  type="number"
+                  id="rewardPool"
+                  name="rewardPool"
+                  value={formData.rewardPool}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="0.001"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="0.0"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Optional: Add ETH to reward contributors
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="requireApproval"
+                  name="requireApproval"
+                  checked={formData.requireApproval}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      requireApproval: e.target.checked,
+                    }))
+                  }
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label
+                  htmlFor="requireApproval"
+                  className="ml-2 block text-sm text-gray-700"
+                >
+                  Require approval for contributions
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                If checked, you'll need to approve each contribution before it's
+                added to your story
+              </p>
             </div>
           </div>
 
           {/* Submit Button */}
           <div className="flex justify-end space-x-4">
+            <button
+              type="button"
+              className="px-6 py-2 border border-blue-300 bg-blue-50 rounded-md text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              onClick={() => {
+                setFormData({
+                  name: "The Chronicles of Aethermoor",
+                  medium: "text",
+                  mainCharacters: 3,
+                  secondaryCharacters: 5,
+                  worldTheme: "Steampunk Fantasy with Floating Islands",
+                  timeline: "Year 1892 in an Alternative Universe",
+                  maxChapters: 15,
+                  maxBranchesPerChapter: 3,
+                  description:
+                    "In a world where steam-powered machines coexist with ancient magic, brave adventurers navigate floating islands connected by sky bridges. When the Great Engine that keeps the world aloft begins to fail, unlikely heroes must unite to save their realm from falling into the endless void below.",
+                  genre: "Steampunk Fantasy Adventure",
+                  targetAudience: "teen",
+                  language: "English",
+                  estimatedDuration: "6 months",
+                  collaborationMode: "open",
+                  rewardPool: "0.1",
+                  requireApproval: false,
+                });
+                toast.success("Form filled with sample data for testing!");
+              }}
+              disabled={isSubmitting || isLoading}
+            >
+              🧪 Fill Test Data
+            </button>
             <button
               type="button"
               className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -448,18 +645,49 @@ export function CreateStoryPage() {
                     language: "English",
                     estimatedDuration: "",
                     collaborationMode: "open",
+                    rewardPool: "0",
+                    requireApproval: false,
                   });
                 }
               }}
+              disabled={isSubmitting || isLoading}
             >
               Clear
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={
+                !isConnected || !isOnShapeNetwork || isSubmitting || isLoading
+              }
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Creating..." : "Create Story"}
+              {isSubmitting || isLoading ? (
+                <span className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Creating Story...
+                </span>
+              ) : (
+                "Create Story"
+              )}
             </button>
           </div>
         </form>
