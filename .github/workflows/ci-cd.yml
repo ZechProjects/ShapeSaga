@@ -90,12 +90,39 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: "--prod"
-          github-comment: false
-          github-deployment: false
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Deploy to Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          echo "Starting Vercel deployment..."
+          echo "Vercel ORG ID: ${VERCEL_ORG_ID:0:8}..." 
+          echo "Vercel Project ID: ${VERCEL_PROJECT_ID:0:8}..."
+
+          vercel --prod --confirm \
+            --token $VERCEL_TOKEN \
+            --meta githubCommitSha=${{ github.sha }} \
+            --meta githubCommitAuthorName="${{ github.actor }}" \
+            --meta githubCommitAuthorLogin="${{ github.actor }}" \
+            --meta githubDeployment=1 \
+            --meta githubOrg="${{ github.repository_owner }}" \
+            --meta githubRepo="${{ github.event.repository.name }}" \
+            --meta githubCommitOrg="${{ github.repository_owner }}" \
+            --meta githubCommitRepo="${{ github.event.repository.name }}" \
+            --meta githubCommitMessage="${{ github.event.head_commit.message }}" \
+            --meta githubCommitRef="${{ github.ref_name }}" || {
+              echo "Vercel deployment failed with exit code $?"
+              echo "Checking Vercel project status..."
+              vercel ls --token $VERCEL_TOKEN || true
+              exit 1
+            }
