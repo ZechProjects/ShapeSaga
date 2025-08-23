@@ -23,6 +23,7 @@ interface CreateStoryParams {
 export function useCreateStory() {
   const { address, isConnected } = useAccount();
   const [isUploading, setIsUploading] = useState(false);
+  const [createdStoryId, setCreatedStoryId] = useState<bigint | null>(null);
 
   const {
     data,
@@ -37,6 +38,7 @@ export function useCreateStory() {
   });
 
   const {
+    data: receipt,
     isLoading: isConfirming,
     isSuccess,
     error: confirmError,
@@ -125,11 +127,37 @@ export function useCreateStory() {
 
   // Show success/error toasts when transaction completes
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && receipt) {
       toast.dismiss();
       toast.success("Story created successfully!");
+
+      // Extract story ID from the transaction logs
+      if (receipt.logs && receipt.logs.length > 0) {
+        try {
+          // Find the StoryCreated event log
+          const storyCreatedLog = receipt.logs.find(
+            (log) =>
+              log.topics &&
+              log.topics[0] &&
+              log.address?.toLowerCase() ===
+                CONTRACT_ADDRESSES.STORY_REGISTRY?.toLowerCase()
+          );
+
+          if (
+            storyCreatedLog &&
+            storyCreatedLog.topics &&
+            storyCreatedLog.topics[1]
+          ) {
+            // The first indexed parameter (storyId) is in topics[1]
+            const storyId = BigInt(storyCreatedLog.topics[1]);
+            setCreatedStoryId(storyId);
+          }
+        } catch (error) {
+          console.error("Error extracting story ID from receipt:", error);
+        }
+      }
     }
-  }, [isSuccess]);
+  }, [isSuccess, receipt]);
 
   useEffect(() => {
     if (writeError || confirmError) {
@@ -155,5 +183,6 @@ export function useCreateStory() {
     isSuccess,
     error: writeError || confirmError,
     transactionHash: data?.hash,
+    createdStoryId,
   };
 }

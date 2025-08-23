@@ -9,6 +9,10 @@ export function StoryPage() {
   const [contributionImageUrl, setContributionImageUrl] = useState<
     string | null
   >(null);
+  // State for fetched text content from metadata (for text stories)
+  const [contributionTextContent, setContributionTextContent] = useState<
+    string | null
+  >(null);
   // ...existing code...
   // All variable declarations above
   // ...existing code...
@@ -36,38 +40,45 @@ export function StoryPage() {
 
   // After all hooks and variable declarations, before return:
   useEffect(() => {
-    async function fetchImageFromMetadata() {
-      if (
-        story?.contentType === ContentType.IMAGE &&
-        currentContribution?.metadataURI
-      ) {
-        try {
-          const ipfsUrl = currentContribution.metadataURI.startsWith("ipfs://")
-            ? `https://ipfs.io/ipfs/${currentContribution.metadataURI.replace(
-                "ipfs://",
-                ""
-              )}`
-            : currentContribution.metadataURI;
-          const res = await fetch(ipfsUrl);
-          const metadata = await res.json();
-          const content = metadata.content;
+    async function fetchContributionContent() {
+      if (!currentContribution?.metadataURI) {
+        setContributionImageUrl(null);
+        setContributionTextContent(null);
+        return;
+      }
+      const ipfsUrl = currentContribution.metadataURI.startsWith("ipfs://")
+        ? `https://ipfs.io/ipfs/${currentContribution.metadataURI.replace(
+            "ipfs://",
+            ""
+          )}`
+        : currentContribution.metadataURI;
+      try {
+        const res = await fetch(ipfsUrl);
+        const metadata = await res.json();
+        const content = metadata.content;
+        if (story?.contentType === ContentType.IMAGE) {
           const match = content.match(/\(ipfs:\/\/([^)]+)\)/);
           const ipfsImgHash = match ? match[1] : null;
-
           if (ipfsImgHash && typeof ipfsImgHash === "string") {
             const imageUrl = `https://ipfs.io/ipfs/${ipfsImgHash}`;
             setContributionImageUrl(imageUrl);
           } else {
             setContributionImageUrl(null);
           }
-        } catch (err) {
+          setContributionTextContent(null);
+        } else if (story?.contentType === ContentType.TEXT) {
+          setContributionTextContent(content);
           setContributionImageUrl(null);
+        } else {
+          setContributionImageUrl(null);
+          setContributionTextContent(null);
         }
-      } else {
+      } catch (err) {
         setContributionImageUrl(null);
+        setContributionTextContent(null);
       }
     }
-    fetchImageFromMetadata();
+    fetchContributionContent();
   }, [story?.contentType, currentContribution?.metadataURI]);
 
   const handleNextPage = () => {
@@ -320,6 +331,35 @@ export function StoryPage() {
                           ) : (
                             <p className="text-gray-500 italic">
                               Image not found in metadata.
+                            </p>
+                          )}
+                          <a
+                            href={
+                              currentContribution.metadataURI.startsWith(
+                                "ipfs://"
+                              )
+                                ? `https://ipfs.io/ipfs/${currentContribution.metadataURI.replace(
+                                    "ipfs://",
+                                    ""
+                                  )}`
+                                : currentContribution.metadataURI
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 text-xs text-blue-600 underline"
+                          >
+                            View Metadata on IPFS
+                          </a>
+                        </div>
+                      ) : story.contentType === ContentType.TEXT ? (
+                        <div>
+                          {contributionTextContent ? (
+                            <p className="text-gray-800 whitespace-pre-line">
+                              {contributionTextContent}
+                            </p>
+                          ) : (
+                            <p className="text-gray-500 italic">
+                              Text content not found in metadata.
                             </p>
                           )}
                           <a

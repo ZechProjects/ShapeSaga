@@ -32,7 +32,8 @@ interface StoryFormData {
 export function CreateStoryPage() {
   const navigate = useNavigate();
   const { isConnected, isOnShapeNetwork } = useWalletConnection();
-  const { createStory, isLoading, isSuccess } = useCreateStory();
+  const { createStory, isLoading, isSuccess, createdStoryId } =
+    useCreateStory();
 
   const [formData, setFormData] = useState<StoryFormData>({
     name: "",
@@ -54,6 +55,16 @@ export function CreateStoryPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Redirect to the created story page after successful creation
+  React.useEffect(() => {
+    if (isSuccess && createdStoryId) {
+      // Navigate to the created story page
+      setTimeout(() => {
+        navigate(`/story/${createdStoryId}`);
+      }, 2000);
+    }
+  }, [isSuccess, createdStoryId, navigate]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -166,11 +177,6 @@ export function CreateStoryPage() {
           rewardPool: "0",
           requireApproval: false,
         });
-
-        // Navigate to explore page after successful creation
-        setTimeout(() => {
-          navigate("/explore");
-        }, 2000);
       }
     } catch (error) {
       console.error("Error creating story:", error);
@@ -617,7 +623,7 @@ export function CreateStoryPage() {
                   language: "English",
                   estimatedDuration: "6 months",
                   collaborationMode: "open",
-                  rewardPool: "0.1",
+                  rewardPool: "0.001",
                   requireApproval: false,
                 });
                 toast.success("Form filled with sample data for testing!");
