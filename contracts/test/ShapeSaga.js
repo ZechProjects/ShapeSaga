@@ -62,7 +62,7 @@ describe("ShapeSaga Contracts", function () {
         0, // TEXT content type
         sampleMetadataURI,
         storySettings,
-        { value: ethers.parseEther("0.1") }
+        { value: ethers.parseEther("0.001") }
       );
 
       const receipt = await tx.wait();
