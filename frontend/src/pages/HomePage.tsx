@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export function HomePage() {
   return (
     <div className="text-center">
@@ -8,8 +10,12 @@ export function HomePage() {
         AI-powered collaborative storytelling on Shape Network
       </p>
       <div className="space-x-4">
-        <button className="btn-primary">Explore Stories</button>
-        <button className="btn-outline">Create Story</button>
+        <Link to="/explore" className="btn-primary">
+          Explore Stories
+        </Link>
+        <Link to="/create" className="btn-outline">
+          Create Story
+        </Link>
       </div>
     </div>
   );
