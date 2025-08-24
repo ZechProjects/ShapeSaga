@@ -23,7 +23,7 @@ export function useStorySettings(storyId: string | undefined) {
     functionName: "getStorySettings",
     args: storyId ? [BigInt(storyId)] : undefined,
     enabled: !!storyId && !!CONTRACT_ADDRESSES.STORY_REGISTRY,
-    watch: true,
+    // Removed watch: true to prevent continuous polling
   });
 
   useEffect(() => {

@@ -12,7 +12,7 @@ export function useStoryTreeMetrics(storyId: string | undefined) {
     functionName: "getStoryTreeMetrics",
     args: storyId ? [BigInt(storyId)] : undefined,
     enabled: !!storyId,
-    watch: true,
+    // Removed watch: true to prevent continuous polling
   });
 
   const metrics: StoryTreeMetrics | null = data

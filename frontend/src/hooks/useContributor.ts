@@ -59,7 +59,7 @@ export function useContributor(contributorAddress: Address | undefined) {
     useContractReads({
       contracts: contributionContracts,
       enabled: storyIds.length > 0 && !!contributorAddress,
-      watch: true,
+      // Removed watch: true to prevent continuous polling
     });
 
   // Flatten and get unique contribution IDs
@@ -93,7 +93,7 @@ export function useContributor(contributorAddress: Address | undefined) {
   } = useContractReads({
     contracts: individualContributionContracts,
     enabled: flatContributionIds.length > 0 && !!contributorAddress,
-    watch: true,
+    // Removed watch: true to prevent continuous polling
   });
 
   // Process data to create contributor profile

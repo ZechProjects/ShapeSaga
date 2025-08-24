@@ -41,7 +41,7 @@ export function useContributors() {
     useContractReads({
       contracts: contributionContracts,
       enabled: storyIds.length > 0,
-      watch: true,
+      // Removed watch: true to prevent continuous polling
     });
 
   // Flatten and get unique contribution IDs
@@ -75,7 +75,7 @@ export function useContributors() {
   } = useContractReads({
     contracts: individualContributionContracts,
     enabled: flatContributionIds.length > 0,
-    watch: true,
+    // Removed watch: true to prevent continuous polling
   });
 
   // Process contributions to extract contributor data

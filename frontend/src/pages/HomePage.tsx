@@ -2,9 +2,25 @@ import { Link } from "react-router-dom";
 import { useStories } from "../hooks/useStories";
 import { StoryCard } from "../components/StoryCard";
 import { Story } from "../lib/contracts";
+import { useState, useEffect } from "react";
 
 export function HomePage() {
-  const { stories, isLoading, error } = useStories();
+  const [lastRefresh, setLastRefresh] = useState(Date.now());
+  const { stories, isLoading, error } = useStories(lastRefresh);
+
+  // Auto-refresh every 30 seconds (less aggressive than continuous polling)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastRefresh(Date.now());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Manual refresh function
+  const handleRefresh = () => {
+    setLastRefresh(Date.now());
+  };
 
   // Get latest 3 stories (already sorted by creation date in the hook)
   const latestStories = stories.slice(0, 3);
@@ -101,6 +117,26 @@ export function HomePage() {
             <Link to="/create" className="btn-outline">
               Create Your Story
             </Link>
+            <button
+              onClick={handleRefresh}
+              className="btn-outline flex items-center justify-center gap-2"
+              title="Refresh stories"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+              Refresh
+            </button>
           </div>
         </div>
 

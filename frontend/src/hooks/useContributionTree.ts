@@ -15,7 +15,7 @@ export function useContributionTree(storyId: string | undefined) {
     functionName: "getStoryContributions",
     args: storyId ? [BigInt(storyId)] : undefined,
     enabled: !!storyId,
-    watch: true,
+    // Removed watch: true to prevent continuous polling
   });
 
   // 2. Prepare contracts for fetching individual contributions
@@ -35,7 +35,7 @@ export function useContributionTree(storyId: string | undefined) {
   } = useContractReads({
     contracts: contributionContracts,
     enabled: !!contributionIds && contributionIds.length > 0,
-    watch: true,
+    // Removed watch: true to prevent continuous polling
   });
 
   // 4. Build tree structure

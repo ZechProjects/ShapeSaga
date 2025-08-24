@@ -13,7 +13,7 @@ export function useContributions(storyId: string | undefined) {
     functionName: "getStoryContributions",
     args: storyId ? [BigInt(storyId)] : undefined,
     enabled: !!storyId,
-    watch: true,
+    // Removed watch: true to prevent continuous polling
   });
 
   // 2. Prepare contracts for fetching individual contributions
@@ -33,7 +33,7 @@ export function useContributions(storyId: string | undefined) {
   } = useContractReads({
     contracts: contributionContracts,
     enabled: !!contributionIds && contributionIds.length > 0,
-    watch: true,
+    // Removed watch: true to prevent continuous polling
   });
 
   const contributions =

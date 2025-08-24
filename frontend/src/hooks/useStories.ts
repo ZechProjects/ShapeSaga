@@ -9,7 +9,7 @@ import {
 } from "../lib/contracts";
 import { Address } from "viem";
 
-export function useStories() {
+export function useStories(forceRefresh?: number) {
   const [stories, setStories] = useState<Story[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,13 +19,20 @@ export function useStories() {
     data: totalStories,
     isLoading: isLoadingTotal,
     error: totalError,
+    refetch,
   } = useContractRead({
     address: CONTRACT_ADDRESSES.STORY_REGISTRY,
     abi: STORY_REGISTRY_ABI,
     functionName: "totalStories",
-    watch: true, // Watch for changes
+    // Removed watch: true to prevent continuous polling
     enabled: !!CONTRACT_ADDRESSES.STORY_REGISTRY,
   });
+
+  useEffect(() => {
+    if (forceRefresh) {
+      refetch();
+    }
+  }, [forceRefresh, refetch]);
 
   useEffect(() => {
     const fetchStories = async () => {
@@ -171,7 +178,7 @@ export function useUserStories(userAddress?: Address) {
     functionName: "getUserStories",
     args: userAddress ? [userAddress] : undefined,
     enabled: !!userAddress && !!CONTRACT_ADDRESSES.STORY_REGISTRY,
-    watch: true,
+    // Removed watch: true to prevent continuous polling
   });
 
   useEffect(() => {
