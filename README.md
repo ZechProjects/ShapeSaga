@@ -17,16 +17,21 @@ A blockchain-powered platform built on Shape Network that enables users to creat
 
 ```
 ShapeSaga/
-├── contracts/          # Hardhat smart contracts for Shape Network
-│   ├── contracts/      # Solidity smart contracts
-│   ├── scripts/        # Deployment scripts
-│   ├── test/          # Contract tests
-│   └── hardhat.config.js
-├── frontend/           # React frontend application
-│   ├── src/           # React source code
-│   ├── public/        # Static assets
+├── api/                     # Vercel API routes
+├── contracts/               # Hardhat smart contracts for Shape Network
+│   ├── contracts/          # Solidity smart contracts
+│   ├── scripts/            # Deployment scripts
+│   ├── test/              # Contract tests
+│   ├── deployments/       # Deployment artifacts
+├── frontend/               # React frontend application
+│   ├── src/
+│   │   ├── components/    # React components
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── lib/           # Utility libraries
+│   │   ├── pages/         # Page components
+│   ├── public/            # Static assets
 │   └── package.json
-├── docs/              # Documentation
+├── docs/                  # Documentation
 └── README.md
 ```
 
@@ -34,7 +39,7 @@ ShapeSaga/
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
+- Node.js (v22 or higher)
 - npm or yarn
 - MetaMask wallet
 - Shape Network testnet tokens
