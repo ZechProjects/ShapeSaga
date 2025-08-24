@@ -21,7 +21,7 @@ export function StoriesPage() {
         story.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesContentType =
         selectedContentType === "all" ||
-        story.contentType === selectedContentType;
+        story.contentType.toString() === selectedContentType.toString();
       return matchesSearch && matchesContentType;
     })
     .sort((a, b) => {
@@ -122,7 +122,7 @@ export function StoriesPage() {
           >
             <option value="all">All Types</option>
             <option value={ContentType.TEXT}>📝 Text</option>
-            <option value={ContentType.IMAGE}>🖼️ Image</option>
+            <option value={ContentType.IMAGE}>🖼️ Comic</option>
             <option value={ContentType.VIDEO}>🎥 Video</option>
           </select>
 
