@@ -7,8 +7,6 @@ docs/
 README.md
 CONTRIBUTING.md
 LICENSE
-package.json
-package-lock.json
 
 # Frontend build artifacts and dependencies
 
