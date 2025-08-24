@@ -18,7 +18,7 @@ interface StoryFormData {
   worldTheme: string;
   timeline: string;
   maxChapters: number | "unlimited";
-  maxBranchesPerChapter: number | "unlimited";
+  maxBranchesPerChapter: number;
   description: string;
   genre: string;
   targetAudience: "children" | "teen" | "adult" | "all";
@@ -75,7 +75,7 @@ export function CreateStoryPage() {
     setFormData((prev) => ({
       ...prev,
       [name]:
-        value === "unlimited"
+        value === "unlimited" && name !== "maxBranchesPerChapter"
           ? "unlimited"
           : (name === "mainCharacters" ||
               name === "secondaryCharacters" ||
@@ -137,7 +137,7 @@ export function CreateStoryPage() {
 
       // Create story settings
       const settings: StorySettings = {
-        allowBranching: formData.maxBranchesPerChapter !== 1,
+        allowBranching: formData.maxBranchesPerChapter > 1,
         requireApproval: formData.requireApproval,
         maxContributions:
           formData.maxChapters === "unlimited"
@@ -461,7 +461,7 @@ export function CreateStoryPage() {
                   htmlFor="maxBranchesPerChapter"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
-                  Maximum Branches per Chapter (1 to unlimited) *
+                  Maximum Branches per Chapter *
                 </label>
                 <select
                   id="maxBranchesPerChapter"
@@ -471,13 +471,26 @@ export function CreateStoryPage() {
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  {[1, 2, 3, 4, 5, 10, 15, 20].map((num) => (
+                  <option value={1}>1 (Linear story - no branching)</option>
+                  {[2, 3, 4, 5].map((num) => (
                     <option key={num} value={num}>
-                      {num}
+                      {num} (Allow up to {num} alternative paths)
                     </option>
                   ))}
-                  <option value="unlimited">Unlimited</option>
                 </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.maxBranchesPerChapter === 1 ? (
+                    <span className="text-amber-600">
+                      ⚠️ Branching will be disabled - contributors can only
+                      continue the main storyline
+                    </span>
+                  ) : (
+                    <span className="text-green-600">
+                      ✓ Contributors can create alternative story paths and
+                      branches
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
           </div>
