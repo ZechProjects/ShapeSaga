@@ -242,14 +242,12 @@ This project is submitted for the Shape Network Hackathon. It demonstrates:
 ## 🔗 Links
 
 - [Shape Network Documentation](https://docs.shape.network)
-- [Live Demo](your-demo-url)
-- [Video Presentation](your-video-url)
-- [Pitch Deck](your-presentation-url)
+- [Live Demo](https://shape-saga.vercel.app/)
+- [Video Presentation](https://drive.google.com/drive/folders/1TCG7QoPuAYFzo7ytPdlPQhAcLRbZl1g9?usp=drive_link)
 
 ## 👥 Team
 
-- **Your Name** - Full Stack Developer
-- Add team member information here
+- **Zech** - Full Stack Developer
 
 ---
 
