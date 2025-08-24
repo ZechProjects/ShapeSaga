@@ -6,7 +6,11 @@
   "installCommand": "cd frontend && npm install",
   "rewrites": [
     {
-      "source": "/((?!api).*)",
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/((?!api|assets|icons|images|favicon\\.ico|site\\.webmanifest).*)",
       "destination": "/index.html"
     }
   ],
@@ -41,7 +45,5 @@
         }
       ]
     }
-  ],
-  "cleanUrls": true,
-  "trailingSlash": false
+  ]
 }
