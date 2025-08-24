@@ -242,7 +242,7 @@ This project is submitted for the Shape Network Hackathon. It demonstrates:
 - Advanced smart contract development on Shape Network
 - Integration with AI services for content generation
 - Modern frontend development practices
-- Innovative use of blockchain for creative applications
+- Innovative use of blockchain for user generated content and collaboration
 
 ## 🔗 Links
 
