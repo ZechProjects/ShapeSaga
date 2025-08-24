@@ -7,11 +7,6 @@
   "installCommand": "cd frontend && npm ci",
   "cleanUrls": true,
   "trailingSlash": false,
-  "functions": {
-    "frontend/api/**/*.ts": {
-      "runtime": "nodejs20.x"
-    }
-  },
   "headers": [
     {
       "source": "/assets/(.*)",

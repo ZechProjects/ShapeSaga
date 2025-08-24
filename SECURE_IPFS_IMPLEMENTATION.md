@@ -93,21 +93,34 @@ const response = await fetch("/api/upload-story", {
 
 ## Deployment Instructions
 
-### 1. Update Environment Variables
+## Deployment Instructions
+
+### 1. Project Structure
+
+The API functions are located in the `/api/` directory at the root level:
+
+```
+/api/
+  ├── upload-story.ts
+  ├── upload-contribution.ts
+  └── upload-file.ts
+```
+
+### 2. Update Environment Variables
 
 Remove any `VITE_PINATA_JWT` from your environment and add `PINATA_JWT` (server-side only).
 
-### 2. Vercel Configuration
+### 3. Vercel Configuration
 
-The existing `vercel.json` will automatically deploy the API functions. No changes needed.
+The `vercel.json` is configured to automatically detect and deploy the API functions. No manual function configuration needed.
 
-### 3. Environment Variables in Vercel
+### 4. Environment Variables in Vercel
 
 1. Go to Vercel dashboard → Project → Settings → Environment Variables
 2. Add `PINATA_JWT` with your token value
 3. Set for all environments (Production, Preview, Development)
 
-### 4. Testing
+### 5. Testing
 
 1. Deploy to Vercel
 2. Test story creation to verify IPFS uploads work

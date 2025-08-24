@@ -69,6 +69,7 @@ export function useCreateContribution() {
         content: params.content,
         contentType: params.contentType,
         description: params.description,
+        parentId: parseInt(params.parentContributionId || "0"),
         isBranch: params.isBranch,
         branchTitle: params.branchTitle,
         authorNotes: params.authorNotes,

@@ -43,7 +43,7 @@ VITE_APP_URL=http://localhost:3001
 ## How It Works
 
 1. **Frontend** (React/Vite) runs on port 3001
-2. **API Server** (Express) runs on port 3003
+2. **API Server** (Express) runs on port 3003 with embedded API logic
 3. **Vite Proxy** forwards `/api/*` requests to the API server
 4. **API Server** handles Pinata JWT securely and forwards requests
 
@@ -51,7 +51,7 @@ VITE_APP_URL=http://localhost:3001
 
 ### Development
 
-- Uses local Express server to simulate Vercel functions
+- Uses local Express server (`dev-server.js`) with embedded API functions
 - API endpoints available at `/api/*`
 - JWT token loaded from local `.env` file
 

@@ -273,6 +273,7 @@ export interface ContributionMetadata {
   content: string;
   contentType: ContentType;
   description?: string;
+  parentId: number;
   isBranch: boolean;
   branchTitle?: string;
   authorNotes?: string;

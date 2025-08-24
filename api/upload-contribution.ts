@@ -5,10 +5,12 @@ interface ContributionMetadata {
   content: string;
   contentType: number;
   description?: string;
-  tags?: string[];
   parentId: number;
   isBranch: boolean;
-  createdBy: string;
+  branchTitle?: string;
+  authorNotes?: string;
+  createdAt: string;
+  version: string;
 }
 
 interface PinataV3Response {

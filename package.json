@@ -29,6 +29,9 @@
     "node": ">=22.0.0",
     "npm": ">=10.0.0"
   },
+  "devDependencies": {
+    "@vercel/node": "^3.0.7"
+  },
   "author": "Your Name",
   "license": "MIT"
 }
