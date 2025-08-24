@@ -1,183 +1,117 @@
 import { StoryMetadata, ContributionMetadata } from "./contracts";
 
-// IPFS/Pinata v3 API configuration
-const PINATA_JWT = import.meta.env.VITE_PINATA_JWT || "";
-const PINATA_API_URL = "https://api.pinata.cloud";
-
-interface PinataV3Response {
-  IpfsHash: string;
-  PinSize: number;
-  Timestamp: string;
-  isDuplicate?: boolean;
-}
+// IPFS configuration - now using secure server-side API
+const API_BASE_URL = import.meta.env.VITE_APP_URL || window.location.origin;
 
 /**
- * Upload story metadata to IPFS via Pinata v3 API
+ * Upload story metadata to IPFS via secure API
  */
 export async function uploadStoryMetadata(
   metadata: StoryMetadata
 ): Promise<string> {
-  if (!PINATA_JWT) {
-    throw new Error("Pinata JWT not configured");
-  }
-
   try {
-    const data = JSON.stringify(metadata, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-
-    const formData = new FormData();
-    formData.append(
-      "file",
-      blob,
-      `story-${metadata.title.replace(/\s+/g, "-").toLowerCase()}.json`
-    );
-
-    // Pinata metadata for v3 API
-    const pinataMetadata = JSON.stringify({
-      name: `ShapeSaga Story: ${metadata.title}`,
-      keyvalues: {
-        genre: metadata.genre,
-        language: metadata.language,
-        medium: metadata.medium,
-        collaborationMode: metadata.collaborationMode,
-        app: "ShapeSaga",
-        type: "story-metadata",
-      },
-    });
-    formData.append("pinataMetadata", pinataMetadata);
-
-    const pinataOptions = JSON.stringify({
-      cidVersion: 1,
-    });
-    formData.append("pinataOptions", pinataOptions);
-
-    const response = await fetch(`${PINATA_API_URL}/pinning/pinFileToIPFS`, {
+    const response = await fetch(`${API_BASE_URL}/api/upload-story`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${PINATA_JWT}`,
+        "Content-Type": "application/json",
       },
-      body: formData,
+      body: JSON.stringify(metadata),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Pinata upload failed: ${response.status} ${errorText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: "Unknown error" }));
+      throw new Error(
+        `Upload failed: ${errorData.error || response.statusText}`
+      );
     }
 
-    const result: PinataV3Response = await response.json();
-    return `ipfs://${result.IpfsHash}`;
+    const result = await response.json();
+    return result.ipfsUri;
   } catch (error) {
-    console.error("Error uploading to IPFS:", error);
-    throw new Error("Failed to upload story metadata to IPFS");
+    console.error("Error uploading story metadata:", error);
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Failed to upload story metadata to IPFS"
+    );
   }
 }
 
 /**
- * Upload contribution metadata to IPFS via Pinata v3 API
+ * Upload contribution metadata to IPFS via secure API
  */
 export async function uploadContributionMetadata(
   metadata: ContributionMetadata
 ): Promise<string> {
-  if (!PINATA_JWT) {
-    throw new Error("Pinata JWT not configured");
-  }
-
   try {
-    const data = JSON.stringify(metadata, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-
-    const formData = new FormData();
-    formData.append(
-      "file",
-      blob,
-      `contribution-${metadata.title.replace(/\s+/g, "-").toLowerCase()}.json`
-    );
-
-    // Pinata metadata for v3 API
-    const pinataMetadata = JSON.stringify({
-      name: `ShapeSaga Contribution: ${metadata.title}`,
-      keyvalues: {
-        contentType: metadata.contentType.toString(),
-        isBranch: metadata.isBranch.toString(),
-        app: "ShapeSaga",
-        type: "contribution-metadata",
-      },
-    });
-    formData.append("pinataMetadata", pinataMetadata);
-
-    const pinataOptions = JSON.stringify({
-      cidVersion: 1,
-    });
-    formData.append("pinataOptions", pinataOptions);
-
-    const response = await fetch(`${PINATA_API_URL}/pinning/pinFileToIPFS`, {
+    const response = await fetch(`${API_BASE_URL}/api/upload-contribution`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${PINATA_JWT}`,
+        "Content-Type": "application/json",
       },
-      body: formData,
+      body: JSON.stringify(metadata),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Pinata upload failed: ${response.status} ${errorText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: "Unknown error" }));
+      throw new Error(
+        `Upload failed: ${errorData.error || response.statusText}`
+      );
     }
 
-    const result: PinataV3Response = await response.json();
-    return `ipfs://${result.IpfsHash}`;
+    const result = await response.json();
+    return result.ipfsUri;
   } catch (error) {
-    console.error("Error uploading contribution to IPFS:", error);
-    throw new Error("Failed to upload contribution metadata to IPFS");
+    console.error("Error uploading contribution metadata:", error);
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Failed to upload contribution metadata to IPFS"
+    );
   }
 }
 
 /**
- * Upload file content to IPFS via Pinata v3 API
+ * Upload file content to IPFS via secure API
  */
 export async function uploadFileToIPFS(file: File): Promise<string> {
-  if (!PINATA_JWT) {
-    throw new Error("Pinata JWT not configured");
-  }
-
   try {
-    const formData = new FormData();
-    formData.append("file", file);
+    // Convert file to base64 for transmission
+    const fileBuffer = await file.arrayBuffer();
+    const base64Data = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
 
-    // Pinata metadata for v3 API
-    const pinataMetadata = JSON.stringify({
-      name: `ShapeSaga File: ${file.name}`,
-      keyvalues: {
-        fileType: file.type,
-        fileName: file.name,
-        app: "ShapeSaga",
-        type: "story-file",
-      },
-    });
-    formData.append("pinataMetadata", pinataMetadata);
-
-    const pinataOptions = JSON.stringify({
-      cidVersion: 1,
-    });
-    formData.append("pinataOptions", pinataOptions);
-
-    const response = await fetch(`${PINATA_API_URL}/pinning/pinFileToIPFS`, {
+    const response = await fetch(`${API_BASE_URL}/api/upload-file`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${PINATA_JWT}`,
+        "Content-Type": "application/json",
       },
-      body: formData,
+      body: JSON.stringify({
+        fileData: base64Data,
+        fileName: file.name,
+        fileType: file.type,
+      }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Pinata upload failed: ${response.status} ${errorText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: "Unknown error" }));
+      throw new Error(
+        `Upload failed: ${errorData.error || response.statusText}`
+      );
     }
 
-    const result: PinataV3Response = await response.json();
-    return `ipfs://${result.IpfsHash}`;
+    const result = await response.json();
+    return result.ipfsUri;
   } catch (error) {
     console.error("Error uploading file to IPFS:", error);
-    throw new Error("Failed to upload file to IPFS");
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to upload file to IPFS"
+    );
   }
 }
 

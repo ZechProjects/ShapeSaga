@@ -1,30 +1,52 @@
-# Pinata v3 API Migration Guide
+# Pinata v3 API Migration Guide - Secure Implementation
 
 ## Overview
 
-The ShapeSaga project has been upgraded to use Pinata's v3 Files API instead of the legacy v2 pinning API. This provides better performance, security, and features.
+The ShapeSaga project has been upgraded to use Pinata's v3 Files API through secure Vercel serverless functions, eliminating the security risk of exposing JWT tokens in client-side code.
+
+## Security Improvements
+
+### Before (Insecure v2 Implementation)
+
+- ❌ API keys exposed in client-side code
+- ❌ Direct Pinata API calls from frontend
+- ❌ Credentials visible in browser development tools
+
+### After (Secure v3 Implementation)
+
+- ✅ JWT token kept server-side only
+- ✅ API calls proxied through secure Vercel functions
+- ✅ No sensitive credentials exposed to client-side
+
+## Architecture
+
+```
+Frontend → Vercel API Functions → Pinata v3 API
+```
 
 ## Changes Made
 
-### 1. API Endpoint Update
+### 1. API Architecture Update
 
-- **Old**: `/pinning/pinFileToIPFS` with API Key + Secret Key headers
-- **New**: `/pinning/pinFileToIPFS` with JWT Bearer token authentication
+- **Old**: Direct client-side calls to Pinata API with exposed credentials
+- **New**: Secure server-side API functions that proxy requests to Pinata
 
 ### 2. Authentication Method
 
-- **Old**: API Key + Secret Key headers (`pinata_api_key`, `pinata_secret_api_key`)
-- **New**: JWT Bearer token (`Authorization: Bearer <JWT>`)
+- **Old**: Client-side JWT token via `VITE_PINATA_JWT`
+- **New**: Server-side JWT token via `PINATA_JWT` (no VITE\_ prefix)
 
-### 3. Response Format
+### 3. API Endpoints
 
-- **Old**: `IpfsHash`, `PinSize`, `Timestamp`
-- **New**: `IpfsHash`, `PinSize`, `Timestamp` (same format, but with JWT auth)
+- **New**: `/api/upload-story` - Upload story metadata
+- **New**: `/api/upload-contribution` - Upload contribution metadata
+- **New**: `/api/upload-file` - Upload files (images, documents, etc.)
 
-### 4. Metadata Format
+### 4. Security Enhancements
 
-- **Old**: `keyvalues` object in `pinataMetadata`
-- **New**: `keyvalues` object in `pinataMetadata` (same format, but with JWT auth)
+- JWT token never exposed to client-side code
+- Request validation and error handling
+- Standardized API responses
 
 ## Setup Instructions
 
@@ -41,47 +63,84 @@ The ShapeSaga project has been upgraded to use Pinata's v3 Files API instead of 
 
 ### 2. Update Environment Variables
 
-In your `/frontend/.env` file, replace the old API keys with the new JWT:
+⚠️ **IMPORTANT SECURITY CHANGE**: The JWT token is now server-side only!
+
+In your `/frontend/.env` file:
 
 ```bash
-# Remove these old variables:
-# VITE_PINATA_API_KEY=your_old_api_key
-# VITE_PINATA_SECRET_KEY=your_old_secret_key
+# Server-side only (no VITE_ prefix for security)
+PINATA_JWT=your_jwt_token_here
 
-# Add this new variable:
-VITE_PINATA_JWT=your_jwt_token_here
+# Client-side app URL for API calls
+VITE_APP_URL=http://localhost:3001
 ```
 
-### 3. Benefits of v3 API
+### 3. Vercel Environment Variables
 
-- **Better Security**: JWT tokens are more secure than API key/secret pairs
-- **Improved Performance**: v3 API is faster and more reliable
+For production deployment, add to Vercel dashboard:
+
+1. Go to Vercel → Project → Settings → Environment Variables
+2. Add `PINATA_JWT` with your token value
+3. Set for all environments (Production, Preview, Development)
+
+### 4. Benefits of Secure v3 Implementation
+
+- **Enhanced Security**: JWT tokens never exposed to client-side code
+- **Better Performance**: v3 API is faster and more reliable
 - **Enhanced Metadata**: More detailed file information and better organization
 - **Future-Proof**: v3 is the actively maintained API version
+- **Request Validation**: Server-side validation and error handling
+- **Audit Trail**: Server-side logging of all IPFS operations
 
 ## File Changes
 
-The following files were updated:
+The following files were updated for secure implementation:
 
-- `frontend/src/lib/ipfs.ts` - Updated to use v3 Files API
+- `frontend/api/upload-story.ts` - NEW: Secure server-side story upload
+- `frontend/api/upload-contribution.ts` - NEW: Secure server-side contribution upload
+- `frontend/api/upload-file.ts` - NEW: Secure server-side file upload
+- `frontend/src/lib/ipfs.ts` - Updated to use secure API endpoints
 - `frontend/.env.example` - Updated environment variable examples
-- `frontend/README.md` - Updated documentation
+- `vercel.json` - Added serverless function configuration
+- `SECURE_IPFS_IMPLEMENTATION.md` - NEW: Security implementation guide
 
 ## Testing
 
-After setting up your JWT token:
+After setting up your JWT token and deploying:
 
-1. Start the frontend: `npm run dev`
-2. Try creating a new story to test IPFS upload
-3. Check the Pinata dashboard to verify files are being uploaded correctly
+1. Set `PINATA_JWT` in your environment (no VITE\_ prefix)
+2. Start the frontend: `npm run dev`
+3. Try creating a new story to test IPFS upload
+4. Check the Pinata dashboard to verify files are being uploaded correctly
+5. Verify JWT token is NOT visible in browser dev tools
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"JWT not configured"**: Make sure `VITE_PINATA_JWT` is set in your `.env` file
-2. **"401 Unauthorized"**: Your JWT token may be invalid or expired
-3. **"403 Forbidden"**: Your JWT token doesn't have the required permissions
+1. **"Server configuration error"**:
+
+   - Make sure `PINATA_JWT` is set (no VITE\_ prefix)
+   - For local development: check `.env` file
+   - For production: check Vercel environment variables
+
+2. **"Method not allowed"**:
+
+   - Ensure you're making POST requests to API endpoints
+   - Check that API functions are properly deployed
+
+3. **"Upload failed"**:
+   - Your JWT token may be invalid or expired
+   - Your JWT token doesn't have the required permissions
+   - Check Pinata API status
+
+### Security Verification
+
+1. Open browser dev tools → Network tab
+2. Create a story or upload a file
+3. Verify API calls go to `/api/upload-*` endpoints
+4. Confirm no Pinata JWT tokens are visible in requests
+5. Check that only your app's API endpoints are called
 
 ### Getting Help
 
@@ -90,8 +149,12 @@ After setting up your JWT token:
 
 ## Migration Checklist
 
-- [ ] Get new Pinata JWT token with correct permissions
-- [ ] Update `.env` file with `VITE_PINATA_JWT`
-- [ ] Remove old `VITE_PINATA_API_KEY` and `VITE_PINATA_SECRET_KEY`
-- [ ] Test file upload functionality
-- [ ] Verify files appear in Pinata dashboard
+- [ ] Install `@vercel/node` dependency
+- [ ] Create secure API functions in `/frontend/api/` directory
+- [ ] Update `ipfs.ts` to use new secure API endpoints
+- [ ] Remove `VITE_PINATA_JWT` from all environment files
+- [ ] Add `PINATA_JWT` (no VITE\_ prefix) to environment
+- [ ] Update Vercel environment variables in dashboard
+- [ ] Test IPFS uploads functionality
+- [ ] Verify JWT token is NOT exposed in browser dev tools
+- [ ] Update documentation and deployment guides

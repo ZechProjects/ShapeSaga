@@ -14,9 +14,16 @@ export default defineConfig({
     global: "globalThis",
   },
   server: {
-    port: parseInt(process.env.PORT || "3000"),
+    port: 3001,
     host: true,
     strictPort: false, // Allow fallback to another port if the specified port is occupied
+    proxy: {
+      "/api": {
+        target: "http://localhost:3003", // Dev API server
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   build: {
     outDir: "dist",
