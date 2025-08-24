@@ -50,6 +50,24 @@ export const STORY_REGISTRY_ABI = [
   },
   {
     type: "function",
+    name: "getStorySettings",
+    inputs: [{ name: "_storyId", type: "uint256" }],
+    outputs: [
+      {
+        name: "",
+        type: "tuple",
+        components: [
+          { name: "allowBranching", type: "bool" },
+          { name: "requireApproval", type: "bool" },
+          { name: "maxContributions", type: "uint256" },
+          { name: "contributionReward", type: "uint256" },
+        ],
+      },
+    ],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
     name: "getUserStories",
     inputs: [{ name: "_user", type: "address" }],
     outputs: [{ name: "", type: "uint256[]" }],

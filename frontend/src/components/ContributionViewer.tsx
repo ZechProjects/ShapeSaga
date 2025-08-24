@@ -1,21 +1,28 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { type ContributionNode, ContentType } from "../lib/contracts";
+import {
+  type ContributionNode,
+  ContentType,
+  type StorySettings,
+} from "../lib/contracts";
 
 interface ContributionViewerProps {
   node: ContributionNode | null;
   storyContentType: ContentType;
   storyId?: string;
+  storySettings?: StorySettings | null;
 }
 
 interface ContributeToStorySectionProps {
   node: ContributionNode;
   storyId: string;
+  storySettings?: StorySettings | null;
 }
 
 function ContributeToStorySection({
   node,
   storyId,
+  storySettings,
 }: ContributeToStorySectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -113,37 +120,69 @@ function ContributeToStorySection({
                   Sequential
                 </span>
               </Link>
-              <Link
-                to={`/story/${storyId}/contribute?parent=${node.contribution.id.toString()}&branch=true`}
-                className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm"
-              >
-                <svg
-                  className="w-4 h-4 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {storySettings?.allowBranching ? (
+                <Link
+                  to={`/story/${storyId}/contribute?parent=${node.contribution.id.toString()}&branch=true`}
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-                Create Branch
-                <span className="ml-2 text-xs bg-green-500 px-2 py-1 rounded">
-                  Alternative
-                </span>
-              </Link>
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                  Create Branch
+                  <span className="ml-2 text-xs bg-green-500 px-2 py-1 rounded">
+                    Alternative
+                  </span>
+                </Link>
+              ) : (
+                <button
+                  disabled
+                  className="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-500 text-sm font-medium rounded-lg cursor-not-allowed"
+                  title="Branching is disabled for this story"
+                >
+                  <svg
+                    className="w-4 h-4 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                    />
+                  </svg>
+                  Create Branch
+                  <span className="ml-2 text-xs bg-gray-400 px-2 py-1 rounded">
+                    Disabled
+                  </span>
+                </button>
+              )}
             </div>
             <div className="mt-3 text-xs text-gray-500">
               <p>
                 <strong>Continue:</strong> Add the next part to this story path
               </p>
-              <p>
-                <strong>Branch:</strong> Create an alternative storyline from
-                this point
-              </p>
+              {storySettings?.allowBranching ? (
+                <p>
+                  <strong>Branch:</strong> Create an alternative storyline from
+                  this point
+                </p>
+              ) : (
+                <p className="text-amber-600">
+                  <strong>Branch:</strong> Disabled for this story
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -156,6 +195,7 @@ export function ContributionViewer({
   node,
   storyContentType,
   storyId,
+  storySettings,
 }: ContributionViewerProps) {
   const [content, setContent] = useState<{
     title?: string;
@@ -493,7 +533,11 @@ export function ContributionViewer({
 
         {/* Action Buttons */}
         {node && storyId && (
-          <ContributeToStorySection node={node} storyId={storyId} />
+          <ContributeToStorySection
+            node={node}
+            storyId={storyId}
+            storySettings={storySettings}
+          />
         )}
 
         {/* Metadata link (fallback if no storyId) */}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useStory } from "../hooks/useStory";
+import { useStorySettings } from "../hooks/useStorySettings";
 import { useContributionTree } from "../hooks/useContributionTree";
 import { useStoryTreeMetrics } from "../hooks/useStoryTreeMetrics";
 import { useFavorites } from "../hooks/useFavorites";
@@ -11,6 +12,7 @@ import { ContributionViewer } from "../components/ContributionViewer";
 export function StoryPage() {
   const { id } = useParams<{ id: string }>();
   const { story, isLoading, error, exists } = useStory(id);
+  const { settings: storySettings } = useStorySettings(id);
   const {
     tree: contributionTree,
     allContributions,
@@ -25,6 +27,7 @@ export function StoryPage() {
   const [isTreeExpanded, setIsTreeExpanded] = useState(false);
   const [shareButtonText, setShareButtonText] = useState("Share");
   const [isFocusedMode, setIsFocusedMode] = useState(false);
+  const [showPathsDropdown, setShowPathsDropdown] = useState(false);
 
   // Select the first contribution by default when tree loads
   useEffect(() => {
@@ -32,6 +35,18 @@ export function StoryPage() {
       setSelectedNode(contributionTree[0]);
     }
   }, [contributionTree, selectedNode]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowPathsDropdown(false);
+    };
+
+    if (showPathsDropdown) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [showPathsDropdown]);
 
   const formatDate = (timestamp: bigint) => {
     // Convert from seconds to milliseconds for JavaScript Date
@@ -526,11 +541,137 @@ export function StoryPage() {
 
                   {/* Content */}
                   <div className={`${isFocusedMode ? "px-4 py-4" : "p-4"}`}>
-                    <ContributionViewer
-                      node={selectedNode}
-                      storyContentType={story?.contentType || ContentType.TEXT}
-                      storyId={id}
-                    />
+                    {/* Content with side navigation buttons */}
+                    <div className="relative">
+                      {/* Navigation helpers for side buttons */}
+                      {(() => {
+                        const { parent, children } = selectedNode
+                          ? getNavigationOptions(selectedNode)
+                          : { parent: null, children: [] };
+
+                        return (
+                          <>
+                            {/* Left navigation button */}
+                            {parent && (
+                              <button
+                                onClick={() => setSelectedNode(parent)}
+                                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-2 z-10 p-3 bg-white/90 hover:bg-white border-2 border-gray-300 hover:border-gray-400 rounded-full shadow-lg transition-all duration-200 group"
+                                title="Go back to previous contribution"
+                              >
+                                <svg
+                                  className="w-5 h-5 text-gray-600 group-hover:text-gray-800"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15 19l-7-7 7-7"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+
+                            {/* Right navigation button */}
+                            {children.length === 1 && (
+                              <button
+                                onClick={() => setSelectedNode(children[0])}
+                                className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-2 z-10 p-3 bg-white/90 hover:bg-white border-2 border-blue-300 hover:border-blue-400 rounded-full shadow-lg transition-all duration-200 group"
+                                title="Continue to next contribution"
+                              >
+                                <svg
+                                  className="w-5 h-5 text-blue-600 group-hover:text-blue-800"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+
+                            {/* Multiple children options button */}
+                            {children.length > 1 && (
+                              <div className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-2 z-10">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowPathsDropdown(!showPathsDropdown);
+                                  }}
+                                  className="p-3 bg-white/90 hover:bg-white border-2 border-blue-300 hover:border-blue-400 rounded-full shadow-lg transition-all duration-200 group"
+                                  title={`${children.length} paths available`}
+                                >
+                                  <svg
+                                    className="w-5 h-5 text-blue-600 group-hover:text-blue-800"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                    />
+                                  </svg>
+                                </button>
+
+                                {/* Dropdown menu for multiple paths */}
+                                {showPathsDropdown && (
+                                  <div
+                                    className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <div className="p-2">
+                                      <div className="text-sm font-medium text-gray-700 mb-2">
+                                        Choose a path:
+                                      </div>
+                                      {children
+                                        .slice(0, 5)
+                                        .map((child: any, index: number) => (
+                                          <button
+                                            key={child.contribution.id}
+                                            onClick={() => {
+                                              setSelectedNode(child);
+                                              setShowPathsDropdown(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                                          >
+                                            {child.contribution.title ||
+                                              `Path ${index + 1}`}
+                                          </button>
+                                        ))}
+                                      {children.length > 5 && (
+                                        <div className="text-xs text-gray-500 mt-2 px-3">
+                                          +{children.length - 5} more paths
+                                          available below
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+
+                      <ContributionViewer
+                        node={selectedNode}
+                        storyContentType={
+                          story?.contentType || ContentType.TEXT
+                        }
+                        storyId={id}
+                        storySettings={storySettings}
+                      />
+                    </div>
 
                     {/* Navigation Controls Below Content */}
                     {selectedNode && (
@@ -644,25 +785,70 @@ export function StoryPage() {
             <div className="flex items-center justify-between border-t border-gray-200 pt-6">
               <div className="flex items-center space-x-4">
                 {story.isActive && (
-                  <Link
-                    to={`/story/${id}/contribute`}
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
-                  >
-                    <svg
-                      className="w-4 h-4 mr-2"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <>
+                    <Link
+                      to={`/story/${id}/contribute`}
+                      className="inline-flex items-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors duration-200"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      />
-                    </svg>
-                    Contribute to Story
-                  </Link>
+                      <svg
+                        className="w-4 h-4 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                        />
+                      </svg>
+                      Contribute to Story
+                    </Link>
+                    {/* Create Branch Button */}
+                    {storySettings?.allowBranching ? (
+                      <Link
+                        to={`/story/${id}/contribute?branch=true`}
+                        className="inline-flex items-center px-6 py-3 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors duration-200"
+                      >
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          />
+                        </svg>
+                        Create Branch
+                      </Link>
+                    ) : (
+                      <button
+                        disabled
+                        className="inline-flex items-center px-6 py-3 bg-gray-300 text-gray-500 text-sm font-medium rounded-md cursor-not-allowed"
+                        title="Branching is disabled for this story"
+                      >
+                        <svg
+                          className="w-4 h-4 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728"
+                          />
+                        </svg>
+                        Create Branch
+                      </button>
+                    )}
+                  </>
                 )}
                 <button
                   onClick={handleToggleFavorite}

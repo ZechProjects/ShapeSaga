@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useStory } from "../hooks/useStory";
+import { useStorySettings } from "../hooks/useStorySettings";
 import { useCreateContribution } from "../hooks/useCreateContribution";
 import { useContributionTree } from "../hooks/useContributionTree";
 import { useContributionTitles } from "../hooks/useContributionTitles";
@@ -21,6 +22,7 @@ export function ContributeToStoryPage() {
     error: storyError,
     exists,
   } = useStory(id);
+  const { settings: storySettings } = useStorySettings(id);
   const {
     createContribution,
     isLoading: contributionLoading,
@@ -48,6 +50,23 @@ export function ContributeToStoryPage() {
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // Reset contribution type to "continue" if branching is disabled
+  useEffect(() => {
+    if (
+      storySettings &&
+      !storySettings.allowBranching &&
+      contributionType === "branch"
+    ) {
+      setContributionType("continue");
+      if (isBranchFromUrl) {
+        // Show warning that branching was requested but is disabled
+        toast.error(
+          "Branching is disabled for this story. Switched to continue mode."
+        );
+      }
+    }
+  }, [storySettings, contributionType, isBranchFromUrl]);
 
   // Handle file upload for media content
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,9 +212,15 @@ export function ContributeToStoryPage() {
       return;
     }
 
-    if (contributionType === "branch" && !branchTitle.trim()) {
-      toast.error("Please provide a branch title");
-      return;
+    if (contributionType === "branch") {
+      if (!storySettings?.allowBranching) {
+        toast.error("Branching is not allowed for this story");
+        return;
+      }
+      if (!branchTitle.trim()) {
+        toast.error("Please provide a branch title");
+        return;
+      }
     }
 
     // Validate media content for image and video stories
@@ -498,19 +523,56 @@ export function ContributeToStoryPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setContributionType("branch")}
+                onClick={() => {
+                  if (storySettings?.allowBranching) {
+                    setContributionType("branch");
+                  }
+                }}
+                disabled={!storySettings?.allowBranching}
                 className={`p-4 border rounded-lg text-left transition-colors duration-200 ${
-                  contributionType === "branch"
+                  !storySettings?.allowBranching
+                    ? "border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed"
+                    : contributionType === "branch"
                     ? "border-blue-500 bg-blue-50 text-blue-900"
                     : "border-gray-300 hover:border-gray-400"
                 }`}
+                title={
+                  !storySettings?.allowBranching
+                    ? "Branching is disabled for this story"
+                    : ""
+                }
               >
-                <div className="font-medium">Create Branch</div>
+                <div className="font-medium">
+                  Create Branch
+                  {!storySettings?.allowBranching && (
+                    <span className="ml-2 text-xs">(Disabled)</span>
+                  )}
+                </div>
                 <div className="text-sm text-gray-600 mt-1">
-                  Start an alternative storyline
+                  {!storySettings?.allowBranching
+                    ? "Not available for this story"
+                    : "Start an alternative storyline"}
                 </div>
               </button>
             </div>
+            {!storySettings?.allowBranching && (
+              <p className="text-sm text-amber-600 mt-2 flex items-center">
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+                The story creator has disabled branching for this story.
+              </p>
+            )}
           </div>
 
           {/* Parent Contribution Selection */}
