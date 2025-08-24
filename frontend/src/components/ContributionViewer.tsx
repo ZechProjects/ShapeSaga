@@ -194,21 +194,41 @@ export function ContributionViewer({
 
         const metadata = await response.json();
 
+        console.log("Fetched metadata:", metadata);
+        console.log("Story content type:", storyContentType);
+
         let imageUrl: string | undefined;
         let videoUrl: string | undefined;
 
         // Extract media URLs from content if present
         if (storyContentType === ContentType.IMAGE) {
-          const imageMatch = metadata.content.match(/\(ipfs:\/\/([^)]+)\)/);
+          // Look for both ipfs:// and https:// URLs in parentheses
+          const imageMatch = metadata.content.match(
+            /\((?:ipfs:\/\/|https:\/\/[^/]*\/ipfs\/)([^)]+)\)/
+          );
+          console.log("Image match result:", imageMatch);
           if (imageMatch && imageMatch[1]) {
             imageUrl = `https://ipfs.io/ipfs/${imageMatch[1]}`;
           }
         } else if (storyContentType === ContentType.VIDEO) {
+          // Look for video patterns with both ipfs:// and https:// URLs
           const videoMatch = metadata.content.match(
-            /\[Video: [^\]]+\]\(ipfs:\/\/([^)]+)\)/
+            /\[Video: [^\]]+\]\((?:ipfs:\/\/|https:\/\/[^/]*\/ipfs\/)([^)]+)\)/
           );
+          console.log("Video match result:", videoMatch);
+          console.log("Full content text:", metadata.content);
           if (videoMatch && videoMatch[1]) {
             videoUrl = `https://ipfs.io/ipfs/${videoMatch[1]}`;
+            console.log("Extracted video URL:", videoUrl);
+          } else {
+            // Fallback: Look for any IPFS URL in the content
+            const fallbackMatch = metadata.content.match(
+              /(?:ipfs:\/\/|https:\/\/[^/]*\/ipfs\/)([a-zA-Z0-9]+)/
+            );
+            if (fallbackMatch && fallbackMatch[1]) {
+              videoUrl = `https://ipfs.io/ipfs/${fallbackMatch[1]}`;
+              console.log("Fallback extracted video URL:", videoUrl);
+            }
           }
         }
 
@@ -374,15 +394,79 @@ export function ContributionViewer({
           )}
 
           {/* Video content */}
-          {storyContentType === ContentType.VIDEO && content?.videoUrl && (
+          {storyContentType === ContentType.VIDEO && (
             <div className="mb-4">
-              <video
-                src={content.videoUrl}
-                controls
-                className="max-w-full h-auto rounded-lg shadow-sm"
-              >
-                Your browser does not support the video tag.
-              </video>
+              {content?.videoUrl ? (
+                <video
+                  src={content.videoUrl}
+                  controls
+                  preload="metadata"
+                  className="max-w-full h-auto rounded-lg shadow-sm"
+                  onError={(e) => {
+                    console.error("Video failed to load:", content.videoUrl);
+                    const target = e.target as HTMLVideoElement;
+                    target.style.display = "none";
+                    // Show fallback message
+                    const parent = target.parentElement;
+                    if (
+                      parent &&
+                      !parent.querySelector(".video-error-message")
+                    ) {
+                      const errorDiv = document.createElement("div");
+                      errorDiv.className =
+                        "video-error-message bg-red-50 border border-red-200 rounded-lg p-4 text-center";
+                      errorDiv.innerHTML = `
+                        <div class="text-red-600 mb-2">⚠️ Video Preview Unavailable</div>
+                        <p class="text-sm text-red-700">The video could not be loaded. You can try accessing it directly:</p>
+                        <a href="${content.videoUrl}" target="_blank" rel="noopener noreferrer" 
+                           class="inline-block mt-2 px-4 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors">
+                          Open Video in New Tab →
+                        </a>
+                      `;
+                      parent.appendChild(errorDiv);
+                    }
+                  }}
+                  onLoadStart={() => {
+                    console.log("Video loading started:", content.videoUrl);
+                  }}
+                  onCanPlay={() => {
+                    console.log("Video can play:", content.videoUrl);
+                  }}
+                >
+                  <p className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                    Your browser does not support the video tag.
+                    <br />
+                    <a
+                      href={content.videoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-2 px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Open Video in New Tab →
+                    </a>
+                  </p>
+                </video>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                  <div className="text-yellow-600 mb-2">
+                    🎥 Video Content Expected
+                  </div>
+                  <p className="text-sm text-yellow-700">
+                    This is a video story, but no video content was found in the
+                    contribution.
+                  </p>
+                  <details className="mt-2 text-xs text-gray-600">
+                    <summary className="cursor-pointer">Debug Info</summary>
+                    <pre className="mt-2 text-left bg-gray-100 p-2 rounded overflow-x-auto">
+                      {JSON.stringify(
+                        { content: content?.text, videoUrl: content?.videoUrl },
+                        null,
+                        2
+                      )}
+                    </pre>
+                  </details>
+                </div>
+              )}
             </div>
           )}
 

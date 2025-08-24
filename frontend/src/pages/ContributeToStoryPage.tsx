@@ -53,15 +53,54 @@ export function ContributeToStoryPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
+      // Validate file size
+      const maxSize = 100 * 1024 * 1024; // 100MB
+      if (selectedFile.size > maxSize) {
+        toast.error(
+          `File size ${(selectedFile.size / 1024 / 1024).toFixed(
+            2
+          )}MB exceeds 100MB limit`
+        );
+        return;
+      }
+
+      // Validate file type based on story content type
+      if (story && story.contentType === ContentType.IMAGE) {
+        if (!selectedFile.type.startsWith("image/")) {
+          toast.error("Please select an image file for this visual story");
+          return;
+        }
+      } else if (story && story.contentType === ContentType.VIDEO) {
+        if (!selectedFile.type.startsWith("video/")) {
+          toast.error("Please select a video file for this video story");
+          return;
+        }
+      }
+
       setFile(selectedFile);
+
       // Create preview URL for images/videos
       if (
         selectedFile.type.startsWith("image/") ||
         selectedFile.type.startsWith("video/")
       ) {
+        // Clean up previous preview URL
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+        }
+
         const url = URL.createObjectURL(selectedFile);
         setPreviewUrl(url);
       }
+
+      // Show file info
+      toast.success(
+        `File selected: ${selectedFile.name} (${(
+          selectedFile.size /
+          1024 /
+          1024
+        ).toFixed(2)}MB)`
+      );
     }
   };
 
@@ -177,18 +216,53 @@ export function ContributeToStoryPage() {
 
       // If file is provided, upload it and include the URL in content
       if (file) {
-        toast.loading("Uploading file...");
-        const fileUrl = await uploadFileToIPFS(file);
+        const isVideo = file.type.startsWith("video/");
+        const isLargeFile = file.size > 10 * 1024 * 1024; // 10MB
 
-        // For media content, include the IPFS URL
-        if (story.contentType === ContentType.IMAGE) {
-          finalContent = `${content}\n\n![${file.name}](${fileUrl})`;
-        } else if (story.contentType === ContentType.VIDEO) {
-          finalContent = `${content}\n\n[Video: ${file.name}](${fileUrl})`;
+        // Show appropriate loading message
+        if (isVideo && isLargeFile) {
+          toast.loading(
+            `Uploading video (${(file.size / 1024 / 1024).toFixed(
+              2
+            )}MB)... This may take a few minutes.`,
+            { duration: 300000 } // 5 minute timeout
+          );
+        } else if (isVideo) {
+          toast.loading("Uploading video...", { duration: 120000 }); // 2 minute timeout
         } else {
-          finalContent = `${content}\n\nAttachment: [${file.name}](${fileUrl})`;
+          toast.loading("Uploading file...");
         }
-        toast.dismiss();
+
+        try {
+          const fileUrl = await uploadFileToIPFS(file);
+
+          // For media content, include the IPFS URL
+          if (story.contentType === ContentType.IMAGE) {
+            finalContent = `${content}\n\n![${file.name}](${fileUrl})`;
+          } else if (story.contentType === ContentType.VIDEO) {
+            // For videos, include both a link and metadata
+            finalContent = `${content}\n\n[Video: ${
+              file.name
+            }](${fileUrl})\n\n*Video Details: ${file.type}, ${(
+              file.size /
+              1024 /
+              1024
+            ).toFixed(2)}MB*`;
+          } else {
+            finalContent = `${content}\n\nAttachment: [${file.name}](${fileUrl})`;
+          }
+
+          toast.dismiss();
+          toast.success(`${isVideo ? "Video" : "File"} uploaded successfully!`);
+        } catch (uploadError) {
+          toast.dismiss();
+          const errorMessage =
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Upload failed";
+          toast.error(`Upload failed: ${errorMessage}`);
+          throw uploadError;
+        }
       }
 
       await createContribution({
@@ -597,7 +671,13 @@ export function ContributeToStoryPage() {
                       <p className="pl-1">or drag and drop</p>
                     </div>
                     <p className="text-xs text-gray-500">
-                      PNG, JPG, GIF up to 10MB
+                      PNG, JPG, GIF, WEBP up to 10MB
+                      {file && file.type.startsWith("image/") && (
+                        <span className="block mt-1 text-green-600 font-medium">
+                          ✓ {file.name} selected (
+                          {(file.size / 1024 / 1024).toFixed(2)}MB)
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -647,7 +727,18 @@ export function ContributeToStoryPage() {
                     src={previewUrl}
                     className="mx-auto h-48 w-auto object-cover rounded-md"
                     controls
+                    preload="metadata"
+                    onError={(e) => {
+                      console.error("Video preview error:", e);
+                      toast.error(
+                        "Cannot preview this video format, but it can still be uploaded"
+                      );
+                    }}
                   />
+                  <div className="text-center mt-2 text-sm text-gray-600">
+                    {file.name} ({(file.size / 1024 / 1024).toFixed(2)}MB,{" "}
+                    {file.type})
+                  </div>
                 </div>
               )}
 
@@ -658,13 +749,23 @@ export function ContributeToStoryPage() {
                 </label>
                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors duration-200">
                   <div className="space-y-1 text-center">
-                    {previewUrl && !file?.type.startsWith("video/") ? (
+                    {previewUrl && file?.type.startsWith("video/") ? (
                       <div className="mb-4">
                         <video
                           src={previewUrl}
                           className="mx-auto h-32 w-auto rounded-md"
                           controls
+                          preload="metadata"
+                          onError={(e) => {
+                            console.error("Video preview error:", e);
+                            toast.error(
+                              "Cannot preview this video format, but it can still be uploaded"
+                            );
+                          }}
                         />
+                        <div className="text-center mt-2 text-xs text-gray-600">
+                          {file.name} ({(file.size / 1024 / 1024).toFixed(2)}MB)
+                        </div>
                       </div>
                     ) : (
                       <svg
@@ -703,7 +804,13 @@ export function ContributeToStoryPage() {
                       <p className="pl-1">or drag and drop</p>
                     </div>
                     <p className="text-xs text-gray-500">
-                      MP4, MOV, AVI up to 100MB
+                      MP4, WEBM, MOV, AVI up to 100MB
+                      {file && file.type.startsWith("video/") && (
+                        <span className="block mt-1 text-green-600 font-medium">
+                          ✓ {file.name} selected (
+                          {(file.size / 1024 / 1024).toFixed(2)}MB)
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>

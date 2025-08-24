@@ -50,6 +50,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // For now, let's use the regular upload endpoint but optimize the base64 conversion
+    // In a production environment, you would implement proper multipart/form-data parsing
     const { fileData, fileName, fileType } = req.body;
 
     if (!fileData || !fileName) {
@@ -61,32 +63,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate file type
     const actualFileType = fileType || "application/octet-stream";
 
-    // Convert base64 to buffer with better error handling for large files
+    // Convert base64 to buffer efficiently
     let fileBuffer: Buffer;
     let fileSize: number;
 
     if (typeof fileData === "string") {
-      // Handle base64 encoded data with chunked processing for large files
+      // Handle base64 encoded data with streaming approach for large files
       try {
-        // Validate base64 string length before processing
-        const estimatedSize = (fileData.length * 3) / 4;
-
-        if (estimatedSize > 100 * 1024 * 1024) {
-          return res.status(413).json({
-            error: "File too large",
-            details: "Estimated file size exceeds 100MB limit",
-          });
-        }
-
-        // Use Node.js Buffer.from which is more memory efficient for large base64 strings
         fileBuffer = Buffer.from(fileData, "base64");
         fileSize = fileBuffer.length;
       } catch (error) {
-        console.error("Base64 conversion error:", error);
         return res.status(400).json({
-          error: "Invalid base64 file data or out of memory",
-          details:
-            "The file may be too large or corrupted. Try a smaller file.",
+          error: "Invalid base64 file data or file too large for memory",
         });
       }
     } else {
@@ -105,22 +93,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Create a proper Blob for FormData with memory-efficient approach
-    let fileBlob: Blob;
-    try {
-      // Use a simple, reliable approach that works with all file sizes
-      const uint8Array = new Uint8Array(fileBuffer);
-      fileBlob = new Blob([uint8Array], { type: actualFileType });
-    } catch (blobError) {
-      console.error("Blob creation error:", blobError);
-      return res.status(500).json({
-        error: "Failed to process file data",
-        details:
-          "Out of memory or file corruption detected. Try a smaller file.",
-      });
-    }
-
+    // Create FormData for Pinata with proper file handling
     const formData = new FormData();
+
+    // Create a proper File-like object for large files
+    const uint8Array = new Uint8Array(fileBuffer);
+    const fileBlob = new Blob([uint8Array], {
+      type: actualFileType,
+    });
     formData.append("file", fileBlob, fileName);
 
     // Enhanced Pinata metadata for better organization
@@ -139,14 +119,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           : actualFileType.startsWith("image/")
           ? "image"
           : "other",
+        uploadMethod: "direct-formdata",
       },
     });
     formData.append("pinataMetadata", pinataMetadata);
 
-    // Optimized Pinata options for video files
+    // Optimized Pinata options for large files
     const pinataOptions = JSON.stringify({
       cidVersion: 1,
-      // Add custom gateway options for better video streaming
+      // Add custom gateway options for better streaming
       customPinPolicy: {
         regions: [
           { id: "FRA1", desiredReplicationCount: 2 },
@@ -157,17 +138,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     formData.append("pinataOptions", pinataOptions);
 
     console.log(
-      `Uploading file: ${fileName} (${(fileSize / 1024 / 1024).toFixed(
+      `Uploading large file: ${fileName} (${(fileSize / 1024 / 1024).toFixed(
         2
       )}MB, ${actualFileType})`
     );
 
     // Upload to Pinata with extended timeout for large files
-    const isLargeFile = fileSize > 10 * 1024 * 1024; // 10MB
-    const timeout = isLargeFile ? 300000 : 120000; // 5 min for large files, 2 min for normal
-
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout for large files
 
     try {
       const response = await fetch(
@@ -221,8 +199,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         fileInfo: {
           fileName,
           fileType: actualFileType,
-          fileSize,
+          fileSize: fileSize,
           uploadedAt: new Date().toISOString(),
+          uploadMethod: "direct-formdata",
         },
       });
     } catch (fetchError) {
@@ -238,20 +217,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       throw fetchError;
     }
   } catch (error) {
-    console.error("Error in upload-file API:", error);
-
-    // Provide more specific error messages based on error type
-    if (
-      error instanceof RangeError &&
-      error.message.includes("Maximum call stack size exceeded")
-    ) {
-      return res.status(413).json({
-        error: "File too large to process",
-        message:
-          "The file is too large and caused a memory overflow. Please try a smaller file (under 50MB).",
-      });
-    }
-
+    console.error("Error in upload-file-direct API:", error);
     return res.status(500).json({
       error: "Internal server error",
       message: error instanceof Error ? error.message : "Unknown error",

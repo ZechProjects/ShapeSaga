@@ -80,9 +80,38 @@ export async function uploadContributionMetadata(
  */
 export async function uploadFileToIPFS(file: File): Promise<string> {
   try {
-    // Convert file to base64 for transmission
-    const fileBuffer = await file.arrayBuffer();
-    const base64Data = btoa(String.fromCharCode(...new Uint8Array(fileBuffer)));
+    // Validate file size
+    const maxSize = 100 * 1024 * 1024; // 100MB
+    if (file.size > maxSize) {
+      throw new Error(
+        `File size ${(file.size / 1024 / 1024).toFixed(
+          2
+        )}MB exceeds 100MB limit`
+      );
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "video/mp4",
+      "video/webm",
+      "video/mov",
+      "video/avi",
+      "video/quicktime",
+      "text/plain",
+      "application/pdf",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(`File type ${file.type} is not supported`);
+    }
+
+    // Always use FileReader for base64 conversion to avoid memory issues
+    const base64Data = await convertLargeFileToBase64(file);
 
     const response = await fetch(`${API_BASE_URL}/api/upload-file`, {
       method: "POST",
@@ -100,19 +129,87 @@ export async function uploadFileToIPFS(file: File): Promise<string> {
       const errorData = await response
         .json()
         .catch(() => ({ error: "Unknown error" }));
-      throw new Error(
-        `Upload failed: ${errorData.error || response.statusText}`
-      );
+
+      // Provide more specific error messages based on status
+      if (response.status === 413) {
+        throw new Error(
+          "File too large for upload service. Please try a smaller file."
+        );
+      } else if (response.status === 429) {
+        throw new Error(
+          "Upload rate limit exceeded. Please wait before uploading another file."
+        );
+      } else if (response.status === 408) {
+        throw new Error(
+          "Upload timeout. Please try a smaller file or check your connection."
+        );
+      } else {
+        throw new Error(
+          `Upload failed: ${errorData.error || response.statusText}`
+        );
+      }
     }
 
     const result = await response.json();
     return result.ipfsUri;
   } catch (error) {
     console.error("Error uploading file to IPFS:", error);
+
+    // Handle specific errors
+    if (
+      error instanceof RangeError &&
+      error.message.includes("Maximum call stack size exceeded")
+    ) {
+      throw new Error(
+        "File too large to process. Please try a smaller file (under 50MB)."
+      );
+    }
+
     throw new Error(
       error instanceof Error ? error.message : "Failed to upload file to IPFS"
     );
   }
+}
+
+/**
+ * Convert files to base64 using FileReader (memory-efficient for all file sizes)
+ */
+async function convertLargeFileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const result = reader.result as string;
+        // Remove the data URL prefix (e.g., "data:video/mp4;base64,")
+        const base64Data = result.split(",")[1];
+        if (!base64Data) {
+          throw new Error("Invalid file data");
+        }
+        resolve(base64Data);
+      } catch (error) {
+        console.error("Base64 conversion error:", error);
+        reject(new Error("Failed to convert file to base64"));
+      }
+    };
+
+    reader.onerror = () => {
+      reject(new Error("Failed to read file"));
+    };
+
+    reader.onabort = () => {
+      reject(new Error("File reading was aborted"));
+    };
+
+    // Use readAsDataURL which is more memory efficient than ArrayBuffer + btoa
+    try {
+      reader.readAsDataURL(file);
+    } catch (error) {
+      reject(
+        new Error("Unable to read file - it may be too large or corrupted")
+      );
+    }
+  });
 }
 
 /**
